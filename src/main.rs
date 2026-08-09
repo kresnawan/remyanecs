@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use macroquad::{input::KeyCode::P, prelude::*};
 
+use crate::Direction::Horizontal;
+
 struct Page {
     world: World,
 }
@@ -56,6 +58,16 @@ struct Position {
 }
 
 impl Position {
+    pub fn set_x(&mut self, value: f32) {
+        self.x = value;
+    }
+
+    pub fn set_y(&mut self, value: f32) {
+        self.y = value;
+    }
+}
+
+impl Position {
     pub fn new(x: f32, y: f32) -> Position {
         Position { x, y }
     }
@@ -66,9 +78,24 @@ struct Dimension {
     h: f32,
 }
 
+impl Dimension {
+    pub fn set_width(&mut self, value: f32) {
+        self.w = value;
+    }
+
+    pub fn set_height(&mut self, value: f32) {
+        self.h = value;
+    }
+}
+
+enum Direction {
+    Vertical,
+    Horizontal,
+}
+
 enum Display {
     Normal,
-    Grid,
+    Grid { direction: Direction, gap: f32 },
     Flex,
 }
 
@@ -143,16 +170,20 @@ impl World {
         display: Option<Display>,
     ) -> Entity {
         let current_entity = self.next_entity.clone();
+
         self.global_pos
             .push(Some(GlobalPosition { x: pos.x, y: pos.y }));
         self.position_type.push(Some(pos_type));
         self.z_index.push(Some(ZIndex(self.next_z_index)));
         self.position.push(Some(pos));
+
         self.dimension.push(Some(dim));
-        self.button_style.push(button_style);
         self.hovered.push(None);
-        self.button.push(button);
         self.parent.push(parent);
+
+        self.button.push(button);
+        self.button_style.push(button_style);
+
         self.div.push(div);
         self.display.push(display);
 
@@ -164,21 +195,68 @@ impl World {
 }
 
 fn system_transform(world: &mut World) {
-    for i in 0..world.next_entity {
-        if let Some(pos) = &world.position[i] {
-            if let Some(parent) = &world.parent[i] {
-                if let Some(parent_global_pos) = &world.global_pos[parent.0] {
-                    world.global_pos[i] = Some(GlobalPosition {
-                        x: parent_global_pos.x + pos.x,
-                        y: parent_global_pos.y + pos.y,
-                    });
+    for entity in 0..world.next_entity {
+        let pos = {
+            let pos = world.position[entity].as_ref().unwrap();
+            Position::new(pos.x, pos.y)
+        };
+        if let Some(PositionType::Absolute) = &world.position_type[entity] {
+            world.global_pos[entity] = Some(GlobalPosition { x: pos.x, y: pos.y });
+            continue;
+        }
 
-                    continue;
+        if let Some(parent) = &world.parent[entity] {
+            if let Some(display) = &world.display[parent.0] {
+                match display {
+                    Display::Grid { direction, gap } => {
+                        let mut child_count = 0;
+                        let mut self_index = 0;
+
+                        let parent_width = world.dimension[parent.0].as_ref().unwrap().w;
+
+                        for i in 0..world.next_entity {
+                            if let Some(found_parent) = &world.parent[i] {
+                                if found_parent.0 == parent.0 {
+                                    child_count += 1;
+                                    if entity == i {
+                                        self_index = child_count - 1;
+                                    }
+                                }
+                            }
+                        }
+
+                        if child_count > 0 {
+                            let total_gaps = (child_count - 1) as f32 * gap;
+                            let available_width = parent_width - total_gaps;
+                            let self_width = available_width / child_count as f32;
+
+                            world.dimension[entity]
+                                .as_mut()
+                                .unwrap()
+                                .set_width(self_width);
+
+                            let new_x = self_index as f32 * (self_width + gap);
+                            world.position[entity].as_mut().unwrap().set_x(new_x);
+                        }
+                    }
+
+                    _ => {}
                 }
             }
 
-            world.global_pos[i] = Some(GlobalPosition { x: pos.x, y: pos.y })
+            let updated_pos = world.position[entity].as_ref().unwrap();
+
+            if let Some(parent_global_pos) = &world.global_pos[parent.0] {
+                world.global_pos[entity] = Some(GlobalPosition {
+                    x: parent_global_pos.x + updated_pos.x,
+                    y: parent_global_pos.y + updated_pos.y,
+                });
+            }
+
+            continue;
         }
+
+        world.global_pos[entity] = Some(GlobalPosition { x: pos.x, y: pos.y })
     }
 }
 
@@ -308,8 +386,11 @@ async fn main() {
     let container = spawn_div(
         &mut world,
         (Position { x: 100., y: 100. }, PositionType::Absolute),
-        Dimension { w: 500., h: 400. },
-        Display::Normal,
+        Dimension { w: 900., h: 400. },
+        Display::Grid {
+            direction: Horizontal,
+            gap: 10.0,
+        },
     );
 
     spawn_button(
@@ -340,7 +421,7 @@ async fn main() {
 
     spawn_button(
         &mut world,
-        (Position::new(100., 50.), PositionType::Relative),
+        (Position::new(100., 0.), PositionType::Relative),
         Dimension { w: 200., h: 100. },
         ButtonStyle {
             text: "Pencet".to_owned(),
