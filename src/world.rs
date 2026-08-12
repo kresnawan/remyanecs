@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-
 use crate::{
-    UIElementId, component::{
+    UIElementId,
+    component::{
         Button, ButtonConfig, Dimension, Display, Div, GlobalPosition, OnClickEvent, Parent,
-        Position, PositionType, ZIndex,
-    }, table::{UIElementTable, button::UIButtonTable, div::UIDivTable}, ui::{UIElement, UILocation}
+        Position, PositionType,
+    },
+    table::{UIElementTable, button::UIButtonTable, div::UIDivTable},
+    ui::{UIElement, UILocation},
 };
 
 pub struct World {

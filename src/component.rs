@@ -83,6 +83,10 @@ impl Position {
     pub fn set_y(&mut self, value: f32) {
         self.y = value;
     }
+
+    pub fn center() -> Position {
+        Position { x: 0., y: 0., dyn_x: Some(DynPos::Center), dyn_y: Some(DynPos::Center) }
+    }
 }
 
 #[derive(Debug)]
@@ -94,7 +98,36 @@ pub struct Dimension {
 }
 
 impl Dimension {
-    pub fn new(w: f32, h: f32) -> Dimension {
+    pub fn new() -> Dimension {
+        Dimension {
+            w: 0.,
+            h: 0.,
+            dyn_w: None,
+            dyn_h: None,
+        }
+    }
+
+    pub fn w(mut self, value: f32) -> Dimension {
+        self.w = value;
+        self
+    }
+
+    pub fn h(mut self, value: f32) -> Dimension {
+        self.h = value;
+        self
+    } 
+
+    pub fn dyn_w(mut self, value: DynDim) -> Dimension {
+        self.dyn_w = Some(value);
+        self
+    } 
+
+    pub fn dyn_h(mut self, value: DynDim) -> Dimension {
+        self.dyn_h = Some(value);
+        self
+    } 
+
+    pub fn from(w: f32, h: f32) -> Dimension {
         Dimension {
             w,
             h,
@@ -102,6 +135,7 @@ impl Dimension {
             dyn_h: None,
         }
     }
+
     pub fn set_width(&mut self, value: f32) {
         self.w = value;
     }
@@ -149,8 +183,31 @@ pub struct Style {
     pub color: UIColor,
     pub font: u32,
     pub font_size: u16,
-    pub outline: Option<f32>,
-    pub outline_color: Option<Color>,
+    pub outline: f32,
+    pub outline_color: Color,
+    pub corner_radius: f32,
+}
+
+impl Style {
+    pub fn new(
+        bg_color: UIColor,
+        color: UIColor,
+        font: u32,
+        font_size: u16,
+        outline: f32,
+        outline_color: Color,
+        corner_radius: f32,
+    ) -> Style {
+        Style {
+            bg_color,
+            color,
+            font,
+            font_size,
+            outline,
+            outline_color,
+            corner_radius,
+        }
+    }
 }
 
 pub type ZIndex = u32;

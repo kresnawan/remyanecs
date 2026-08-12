@@ -1,5 +1,8 @@
 pub mod button;
 pub mod div;
+pub mod dialogue;
+pub mod text_input;
+pub mod switch;
 
 use crate::{
     UIElementId,

@@ -1,12 +1,16 @@
-use macroquad::color::{BLACK, BLUE, GREEN, PURPLE};
+use macroquad::{color::{BLACK, BLANK, BLUE, GREEN, PURPLE, RED}, window::clear_background};
 
 use crate::{
     component::{
-        ButtonConfig, Dimension, Display, DynDim, Position, PositionType, Style, UIColor, UIEvent,
-    }, render_q::render, system::{
+        ButtonConfig, Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, Style, UIColor, UIEvent
+    },
+    render_q::render,
+    system::{
         system_dynamic_transform, system_handle_ui_events, system_hover, system_on_click,
         system_parent_display, system_transform,
-    }, world::World
+    },
+    ui::widgets::button::spawn_std_button,
+    world::World,
 };
 
 pub struct MainMenu {
@@ -19,75 +23,50 @@ impl MainMenu {
         let mut world = World::new();
 
         let container = world.spawn_div(
-            (Position::from(100., 100.), PositionType::Absolute),
-            Dimension::new(900., 400.),
-            // Display::Grid {
-            //     direction: Direction::Horizontal,
-            //     gap: 10.0,
-            // },
+            (Position::center(), PositionType::Absolute),
+            Dimension::new().dyn_w(DynDim::Percent(0.8)).dyn_h(DynDim::Percent(0.8)),
             Display::Normal,
             None,
         );
 
-        world.spawn_button(
-            (Position::from(0., 0.), PositionType::Relative),
-            Dimension {
-                w: 0.,
-                h: 100.,
-                dyn_w: Some(DynDim::Percent(0.5)),
-                dyn_h: None,
-            },
-            ButtonConfig {
-                text: "Pencet".to_owned(),
-                style: Style {
-                    bg_color: UIColor::Fill(GREEN),
-                    color: UIColor::Fill(BLACK),
-                    font: 1,
-                    font_size: 48,
-                    outline: None,
-                    outline_color: None,
-                },
-                hover_style: Some(Style {
-                    bg_color: UIColor::Fill(BLUE),
-                    color: UIColor::Fill(BLACK),
-                    font: 1,
-                    font_size: 48,
-                    outline: None,
-                    outline_color: None,
-                }),
-            },
+        let btn_container = world.spawn_div(
+            (Position::new().dyn_y(DynPos::End).dyn_x(DynPos::Center), PositionType::Relative),
+            Dimension::new().dyn_w(DynDim::Full).dyn_h(DynDim::Percent(0.5)),
+            // Display::Grid {
+            //     direction: Direction::Horizontal,
+            //     gap: 10.0,
+            // },
+            Display::Grid { direction: Direction::Vertical, gap: 20. },
             Some(container),
+        );
+
+        spawn_std_button(
+            &mut world,
+            Position::new(),
+            Dimension::new().h(100.).dyn_w(DynDim::Full),
+            PositionType::Relative,
+            "Create Room",
+            Some(btn_container),
             None,
         );
 
-        world.spawn_button(
-            (Position::from(100., 50.), PositionType::Relative),
-            Dimension {
-                w: 0.,
-                h: 100.,
-                dyn_w: Some(DynDim::Percent(0.5)),
-                dyn_h: None,
-            },
-            ButtonConfig {
-                text: "Pencet".to_owned(),
-                style: Style {
-                    bg_color: UIColor::Fill(PURPLE),
-                    color: UIColor::Fill(BLACK),
-                    font: 1,
-                    font_size: 48,
-                    outline: None,
-                    outline_color: None,
-                },
-                hover_style: Some(Style {
-                    bg_color: UIColor::Fill(BLUE),
-                    color: UIColor::Fill(BLACK),
-                    font: 1,
-                    font_size: 48,
-                    outline: None,
-                    outline_color: None,
-                }),
-            },
-            Some(container),
+        spawn_std_button(
+            &mut world,
+            Position::new().y(300.),
+            Dimension::new().h(100.).dyn_w(DynDim::Full),
+            PositionType::Relative,
+            "Create Room",
+            Some(btn_container),
+            None,
+        );
+
+        spawn_std_button(
+            &mut world,
+            Position::new().y(300.),
+            Dimension::new().h(100.).dyn_w(DynDim::Full),
+            PositionType::Relative,
+            "Settings",
+            Some(btn_container),
             None,
         );
 
@@ -106,10 +85,9 @@ impl MainMenu {
         system_hover(&mut self.world);
         system_on_click(&mut self.world, &mut self.ui_events);
         system_handle_ui_events(&mut self.world, &mut self.ui_events);
-
-        println!("{:#?}", self.world.hovered_entity)
     }
     pub fn draw(&self) {
+        clear_background(RED);
         render(&self.world);
     }
 }

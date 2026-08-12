@@ -1,8 +1,7 @@
 use macroquad::prelude::*;
 
 use crate::{
-    component::{Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent},
-    world::World,
+    component::{Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent}, ui::UIElement, world::World
 };
 
 struct PendingLayoutUpdate {
@@ -114,12 +113,15 @@ pub fn system_dynamic_transform(world: &mut World) {
 
     for (table_idx, table) in world.ui_tables.iter().enumerate() {
         for (index, entity) in table.id().iter().enumerate() {
-            let parent_entity = match &table.parent()[index] {
-                Some(e) => e,
-                None => continue,
+            let parent_dim = match &table.parent()[index] {
+                Some(e) => {
+                    &world.ui_tables[UIElement::UIDiv.t_index()].dimension()[*e]
+                },
+                None => {
+                    &Dimension::from(screen_width(), screen_height())
+                },
             };
 
-            let parent_dim = &world.ui_tables[0].dimension()[*parent_entity];
             let (pos, dim) = (&table.position()[index], &table.dimension()[index]);
 
             if let Some(dyn_w) = &dim.dyn_w {
