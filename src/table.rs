@@ -32,13 +32,13 @@ impl UIElementTable {
                 visible: table.visible[index],
                 vis: UIVisual::UIButton(&table.button_config[index]),
             }),
-            _ => None,
+            UIElementTable::UIDivTable(_) => None
         }
     }
     pub fn on_click_event(&self) -> Option<&Vec<Option<OnClickEvent>>> {
         match self {
             UIElementTable::UIButtonTable(table) => Some(&table.on_click_event),
-            _ => None,
+            UIElementTable::UIDivTable(_) => None
         }
     }
     pub fn z_index(&self) -> &Vec<ZIndex> {

@@ -1,7 +1,3 @@
-pub mod widgets;
-
-
-
 #[derive(Debug)]
 pub enum UIElement {
     UIButton,

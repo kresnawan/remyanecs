@@ -112,7 +112,7 @@ pub fn system_dynamic_transform(world: &mut World) {
     let mut pending_updates: Vec<PendingLayoutUpdate> = Vec::new();
 
     for (table_idx, table) in world.ui_tables.iter().enumerate() {
-        for (index, entity) in table.id().iter().enumerate() {
+        for (index, _entity) in table.id().iter().enumerate() {
             let parent_dim = match &table.parent()[index] {
                 Some(e) => {
                     &world.ui_tables[UIElement::UIDiv.t_index()].dimension()[*e]
@@ -356,7 +356,7 @@ pub fn system_on_click(world: &mut World, ui_events: &mut Vec<UIEvent>) {
     }
 }
 
-pub fn system_handle_ui_events(world: &mut World, ui_events: &mut Vec<UIEvent>) {
+pub fn system_handle_ui_events(_world: &mut World, ui_events: &mut Vec<UIEvent>) {
     for event in ui_events.drain(..) {
         match event {
             UIEvent::CreateRoom => {

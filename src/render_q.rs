@@ -1,7 +1,13 @@
-use macroquad::{input::{MouseButton, is_mouse_button_down}, text::draw_text, time::draw_fps};
+use macroquad::{
+    input::{MouseButton, is_mouse_button_down},
+    time::draw_fps,
+};
 
 use crate::{
-    UIElementId, component::{ButtonConfig, Dimension, GlobalPosition}, ui::widgets::button::render_button, world::World
+    UIElementId,
+    component::{ButtonConfig, Dimension, GlobalPosition},
+    table::button::render_button,
+    world::World,
 };
 
 pub struct UIRender<'a> {
@@ -42,9 +48,7 @@ pub fn render(world: &World) {
         element.is_pressed = element.is_hovered && is_mouse_button_down(MouseButton::Left);
 
         match element.vis {
-            UIVisual::UIButton(_config) => {
-                render_button(&element)
-            }
+            UIVisual::UIButton(_config) => render_button(&element),
         }
     }
 

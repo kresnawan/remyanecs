@@ -1,15 +1,13 @@
-use macroquad::{color::{BLACK, BLANK, BLUE, GREEN, PURPLE, RED}, window::clear_background};
+use macroquad::{color::RED, window::clear_background};
 
 use crate::{
-    component::{
-        ButtonConfig, Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, Style, UIColor, UIEvent
-    },
+    component::{Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, UIEvent},
     render_q::render,
     system::{
         system_dynamic_transform, system_handle_ui_events, system_hover, system_on_click,
         system_parent_display, system_transform,
     },
-    ui::widgets::button::spawn_std_button,
+    table::button::spawn_std_button,
     world::World,
 };
 
@@ -24,19 +22,29 @@ impl MainMenu {
 
         let container = world.spawn_div(
             (Position::center(), PositionType::Absolute),
-            Dimension::new().dyn_w(DynDim::Percent(0.8)).dyn_h(DynDim::Percent(0.8)),
+            Dimension::new()
+                .dyn_w(DynDim::Percent(0.8))
+                .dyn_h(DynDim::Percent(0.8)),
             Display::Normal,
             None,
         );
 
         let btn_container = world.spawn_div(
-            (Position::new().dyn_y(DynPos::End).dyn_x(DynPos::Center), PositionType::Relative),
-            Dimension::new().dyn_w(DynDim::Full).dyn_h(DynDim::Percent(0.5)),
+            (
+                Position::new().dyn_y(DynPos::End).dyn_x(DynPos::Center),
+                PositionType::Relative,
+            ),
+            Dimension::new()
+                .dyn_w(DynDim::Full)
+                .dyn_h(DynDim::Percent(0.5)),
             // Display::Grid {
             //     direction: Direction::Horizontal,
             //     gap: 10.0,
             // },
-            Display::Grid { direction: Direction::Vertical, gap: 20. },
+            Display::Grid {
+                direction: Direction::Vertical,
+                gap: 20.,
+            },
             Some(container),
         );
 
