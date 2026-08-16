@@ -5,8 +5,15 @@ use macroquad::{
 
 use crate::{
     UIElementId,
-    component::{ButtonConfig, Dimension, GlobalPosition},
-    table::button::render_button,
+    component::{ButtonConfig, Dimension, GlobalPosition, Style},
+    table::{
+        UIElementTable,
+        button::render_button,
+        rectangle::render_rectangle,
+        slot::{SlotState, render_slot},
+        switch::{SwitchConfig, render_switch},
+        text::render_text,
+    },
     world::World,
 };
 
@@ -17,12 +24,38 @@ pub struct UIRender<'a> {
     pub z_index: u32,
     pub is_hovered: bool,
     pub is_pressed: bool,
+    pub is_on: bool,
     pub visible: bool,
     pub vis: UIVisual<'a>,
 }
 
+impl<'a> UIRender<'a> {
+    pub fn new(table: &'a UIElementTable, vis: UIVisual<'a>, index: usize) -> UIRender<'a> {
+        UIRender {
+            element_id: table.id()[index],
+            global_pos: &table.global_pos()[index],
+            dim: &table.dimension()[index],
+            z_index: table.z_index()[index],
+            is_hovered: false,
+            is_pressed: false,
+            is_on: false,
+            visible: table.visible()[index],
+            vis,
+        }
+    }
+
+    pub fn is_on(mut self, value: bool) -> UIRender<'a> {
+        self.is_on = value;
+        self
+    }
+}
+
 pub enum UIVisual<'a> {
     UIButton(&'a ButtonConfig),
+    UISwitch(&'a SwitchConfig),
+    UISlot(&'a SlotState),
+    UIRectangle(&'a Style),
+    UIText(&'a Style, Option<f32>, &'a String),
 }
 
 pub fn render(world: &World) {
@@ -49,6 +82,10 @@ pub fn render(world: &World) {
 
         match element.vis {
             UIVisual::UIButton(_config) => render_button(&element),
+            UIVisual::UISwitch(_config) => render_switch(&element),
+            UIVisual::UIRectangle(_config) => render_rectangle(&element),
+            UIVisual::UISlot(_config) => render_slot(&element),
+            UIVisual::UIText(_, _, _) => render_text(&element),
         }
     }
 

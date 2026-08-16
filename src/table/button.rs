@@ -18,9 +18,9 @@ pub struct UIButtonTable {
     pub z_index: Vec<ZIndex>,
     pub global_pos: Vec<GlobalPosition>,
     pub position_type: Vec<PositionType>,
-
     pub dimension: Vec<Dimension>,
     pub parent: Vec<Option<Parent>>,
+    
     pub on_click_event: Vec<Option<OnClickEvent>>,
     pub disabled: Vec<bool>,
     pub visible: Vec<bool>,

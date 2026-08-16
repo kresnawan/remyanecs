@@ -1,7 +1,13 @@
 use macroquad::prelude::*;
 
 use crate::{
-    component::{Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent}, ui::UIElement, world::World
+    UIElementId,
+    component::{
+        Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent,
+    },
+    table::UIElementTable,
+    ui::UIElement,
+    world::World,
 };
 
 struct PendingLayoutUpdate {
@@ -11,6 +17,44 @@ struct PendingLayoutUpdate {
     new_height: Option<f32>,
     new_x: Option<f32>,
     new_y: Option<f32>,
+}
+
+pub fn system_text_dimension(world: &mut World) {
+    let mut update_queue: Vec<(usize, f32, f32)> = Vec::new();
+    for (index, _entity) in world.ui_tables[UIElement::UIText.t_index()]
+        .id()
+        .iter()
+        .enumerate()
+    {
+        let table = world.ui_tables[UIElement::UIText.t_index()].as_text();
+        let Some(table) = table else {
+            return;
+        };
+
+        let text_dimension =
+            measure_text(&table.value[index], None, table.style[index].font_size, 1.);
+
+        let prev_w = table.dimension[index].w;
+        let prev_h = table.dimension[index].h;
+
+        if (prev_w, prev_h)
+            == (text_dimension.width, text_dimension.height)
+        {
+            continue;
+        }
+
+        update_queue.push((index, text_dimension.width, text_dimension.height));
+    }
+
+    for (index, w, h) in update_queue {
+        let table = &mut world.ui_tables[UIElement::UIText.t_index()];
+        let Some(table) = table.as_text_mut() else {
+            continue;
+        };
+
+        table.dimension[index].w = w;
+        table.dimension[index].h = h;
+    }
 }
 
 pub fn system_parent_display(world: &mut World) {
@@ -114,12 +158,11 @@ pub fn system_dynamic_transform(world: &mut World) {
     for (table_idx, table) in world.ui_tables.iter().enumerate() {
         for (index, _entity) in table.id().iter().enumerate() {
             let parent_dim = match &table.parent()[index] {
-                Some(e) => {
-                    &world.ui_tables[UIElement::UIDiv.t_index()].dimension()[*e]
+                Some(entity) => {
+                    let location = &world.ui_locations[*entity];
+                    &world.ui_tables[UIElement::UIDiv.t_index()].dimension()[location.index]
                 },
-                None => {
-                    &Dimension::from(screen_width(), screen_height())
-                },
+                None => &Dimension::from(screen_width(), screen_height()),
             };
 
             let (pos, dim) = (&table.position()[index], &table.dimension()[index]);
@@ -294,7 +337,7 @@ pub fn system_transform(world: &mut World) {
                 continue;
             }
 
-            pending_updates.push((table_idx, *entity, pos.x, pos.y));
+            pending_updates.push((table_idx, index, pos.x, pos.y));
         }
     }
 
@@ -342,16 +385,41 @@ pub fn system_hover(world: &mut World) {
 }
 
 pub fn system_on_click(world: &mut World, ui_events: &mut Vec<UIEvent>) {
+    let mut update_queue: Vec<(usize, UIElementId, bool)> = Vec::new();
+
     for i in &world.hoverable_elements {
         let table = &world.ui_tables[i.t_index()];
-        for entity in table.id() {
-            if is_mouse_button_released(MouseButton::Left) {
+        for (index, entity) in table.id().iter().enumerate() {
+            let is_hovered = if let Some(hovered_entity) = world.hovered_entity {
+                hovered_entity == *entity
+            } else {
+                false
+            };
+
+            if is_mouse_button_released(MouseButton::Left) && is_hovered {
+                match table {
+                    UIElementTable::UISwitchTable(table) => {
+                        update_queue.push((i.t_index(), index, !table.is_on[index]));
+                    }
+
+                    _ => {}
+                }
+
                 if let Some(on_click) = table.on_click_event() {
-                    if let Some(event) = &on_click[*entity] {
+                    if let Some(event) = &on_click[index] {
                         ui_events.push(event.0.clone());
                     }
                 }
             }
+        }
+    }
+
+    for update in update_queue {
+        let table = &mut world.ui_tables[update.0];
+        match table {
+            UIElementTable::UISwitchTable(table) => table.is_on[update.1] = update.2,
+
+            _ => {}
         }
     }
 }

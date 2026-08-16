@@ -10,12 +10,10 @@ pub struct UIDivTable {
     pub z_index: Vec<ZIndex>,
     pub global_pos: Vec<GlobalPosition>,
     pub position_type: Vec<PositionType>,
-
     pub dimension: Vec<Dimension>,
-
     pub parent: Vec<Option<Parent>>,
+    
     pub visible: Vec<bool>,
-
     pub div: Vec<Div>,
     pub display: Vec<Display>,
     pub childs: Vec<Vec<usize>>,

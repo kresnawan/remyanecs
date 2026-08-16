@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use remyan_client_ecs::page::MainMenu;
+use remyan_client_ecs::page::{MainMenu, Page};
 
 #[macroquad::main("RemyanECS")]
 async fn main() {

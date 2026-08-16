@@ -85,7 +85,12 @@ impl Position {
     }
 
     pub fn center() -> Position {
-        Position { x: 0., y: 0., dyn_x: Some(DynPos::Center), dyn_y: Some(DynPos::Center) }
+        Position {
+            x: 0.,
+            y: 0.,
+            dyn_x: Some(DynPos::Center),
+            dyn_y: Some(DynPos::Center),
+        }
     }
 }
 
@@ -115,17 +120,17 @@ impl Dimension {
     pub fn h(mut self, value: f32) -> Dimension {
         self.h = value;
         self
-    } 
+    }
 
     pub fn dyn_w(mut self, value: DynDim) -> Dimension {
         self.dyn_w = Some(value);
         self
-    } 
+    }
 
     pub fn dyn_h(mut self, value: DynDim) -> Dimension {
         self.dyn_h = Some(value);
         self
-    } 
+    }
 
     pub fn from(w: f32, h: f32) -> Dimension {
         Dimension {
@@ -170,6 +175,15 @@ pub enum UIColor {
     Gradient(Gradient),
 }
 
+impl UIColor {
+    pub fn as_fill(&self) -> Color {
+        match self {
+            UIColor::Fill(color) => *color,
+            UIColor::Gradient(grad) => grad.colors[0],
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum UIEvent {
     CreateRoom,
@@ -206,6 +220,20 @@ impl Style {
             outline,
             outline_color,
             corner_radius,
+        }
+    }
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Self {
+            bg_color: UIColor::Fill(WHITE),
+            color: UIColor::Fill(BLACK),
+            font: 0,
+            font_size: 24,
+            outline: 0.,
+            outline_color: BLACK,
+            corner_radius: 0.,
         }
     }
 }

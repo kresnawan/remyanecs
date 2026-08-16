@@ -1,15 +1,26 @@
-use macroquad::{color::RED, window::clear_background};
+use macroquad::{
+    color::{BLUE, RED, WHITE},
+    window::clear_background,
+};
 
 use crate::{
-    component::{Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, UIEvent},
+    component::{
+        Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, Style, UIColor,
+        UIEvent,
+    },
     render_q::render,
     system::{
         system_dynamic_transform, system_handle_ui_events, system_hover, system_on_click,
-        system_parent_display, system_transform,
+        system_parent_display, system_text_dimension, system_transform,
     },
-    table::button::spawn_std_button,
+    table::{button::spawn_std_button, slot::SlotIndex, switch::spawn_std_switch},
     world::World,
 };
+
+pub trait Page {
+    fn update(&mut self);
+    fn draw(&self);
+}
 
 pub struct MainMenu {
     world: World,
@@ -29,6 +40,24 @@ impl MainMenu {
             None,
         );
 
+        
+
+        spawn_std_switch(
+            &mut world,
+            Position::new().x(100.),
+            Dimension::from(100., 50.),
+            PositionType::Relative,
+            None,
+            None,
+        );
+
+        world.spawn_slot(
+            (Position::new().y(400.).x(25.), PositionType::Relative),
+            Dimension::new().w(100.).h(300.),
+            SlotIndex::One,
+            None,
+        );
+
         let btn_container = world.spawn_div(
             (
                 Position::new().dyn_y(DynPos::End).dyn_x(DynPos::Center),
@@ -37,10 +66,6 @@ impl MainMenu {
             Dimension::new()
                 .dyn_w(DynDim::Full)
                 .dyn_h(DynDim::Percent(0.5)),
-            // Display::Grid {
-            //     direction: Direction::Horizontal,
-            //     gap: 10.0,
-            // },
             Display::Grid {
                 direction: Direction::Vertical,
                 gap: 20.,
@@ -78,6 +103,46 @@ impl MainMenu {
             None,
         );
 
+        world.spawn_rectangle(
+            (
+                Position::new(),
+                PositionType::Relative,
+            ),
+            Dimension::new().w(200.).dyn_h(DynDim::Full),
+            Style {
+                bg_color: UIColor::Fill(BLUE),
+                outline: 0.,
+                outline_color: WHITE,
+                corner_radius: 5.,
+                ..Default::default()
+            },
+            None,
+        );
+
+        world.spawn_text(
+            (
+                Position::new(),
+                PositionType::Relative,
+            ),
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam dictum nunc quis 
+            placerat tempus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur 
+            ridiculus mus. Fusce dapibus turpis augue, eget porttitor nisl rutrum id. Vivamus sed luctus 
+            lectus. Praesent eget ante vel justo dapibus pharetra nec pretium sapien. Fusce vitae euismod 
+            sem. Aliquam malesuada nibh erat, vitae laoreet nunc porta id. Praesent ornare, velit ut tempor 
+            pretium, velit ex sowbdebsineinifnineiooneonofnonxosnonwosnwo erat. Suspendisse luctus mauris 
+            magna. Donec pretium semper pellentesque. In felis tellus, viverra sed velit et, suscipit dictum 
+            massa. Phasellus ultricies porta justo non rhoncus. Etiam rutrum nibh vitae accumsan euismod. 
+            In id diam congue, malesuada leo sed, mollis ipsum.",
+            Style {
+                font_size: 20,
+                ..Default::default()
+            },
+            Some(200.),
+            None,
+        );
+
+        
+
         MainMenu {
             world,
             ui_events: Vec::new(),
@@ -85,8 +150,9 @@ impl MainMenu {
     }
 }
 
-impl MainMenu {
-    pub fn update(&mut self) {
+impl Page for MainMenu {
+    fn update(&mut self) {
+        system_text_dimension(&mut self.world);
         system_parent_display(&mut self.world);
         system_dynamic_transform(&mut self.world);
         system_transform(&mut self.world);
@@ -94,7 +160,7 @@ impl MainMenu {
         system_on_click(&mut self.world, &mut self.ui_events);
         system_handle_ui_events(&mut self.world, &mut self.ui_events);
     }
-    pub fn draw(&self) {
+    fn draw(&self) {
         clear_background(RED);
         render(&self.world);
     }
