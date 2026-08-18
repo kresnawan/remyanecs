@@ -5,6 +5,7 @@ use crate::{
     component::{
         Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent,
     },
+    helper::split_by_width,
     table::UIElementTable,
     ui::UIElement,
     world::World,
@@ -19,41 +20,82 @@ struct PendingLayoutUpdate {
     new_y: Option<f32>,
 }
 
-pub fn system_text_dimension(world: &mut World) {
-    let mut update_queue: Vec<(usize, f32, f32)> = Vec::new();
-    for (index, _entity) in world.ui_tables[UIElement::UIText.t_index()]
-        .id()
-        .iter()
-        .enumerate()
-    {
-        let table = world.ui_tables[UIElement::UIText.t_index()].as_text();
-        let Some(table) = table else {
-            return;
-        };
+pub fn system_arrange_text(world: &mut World) {
+    let mut update_queue: Vec<(usize, Vec<String>)> = Vec::new();
 
-        let text_dimension =
-            measure_text(&table.value[index], None, table.style[index].font_size, 1.);
+    let UIElementTable::UITextTable(table) = &world.ui_tables[UIElement::UIText.t_index()] else {
+        return;
+    };
 
-        let prev_w = table.dimension[index].w;
-        let prev_h = table.dimension[index].h;
-
-        if (prev_w, prev_h)
-            == (text_dimension.width, text_dimension.height)
-        {
+    for (index, _entity) in table.ids.iter().enumerate() {
+        if !table.is_dirty[index] {
             continue;
         }
 
-        update_queue.push((index, text_dimension.width, text_dimension.height));
+        let value = &table.value[index];
+        let max_width = {
+            if let Some(mw) = table.max_width[index] {
+                mw
+            } else {
+                if let Some(parent_id) = table.parent[index] {
+                    let parent_loc = &world.ui_locations[parent_id];
+
+                    let div_table = &world.ui_tables[UIElement::UIDiv.t_index()].dimension()
+                        [parent_loc.index]
+                        .w;
+                    *div_table
+                } else {
+                    screen_width()
+                }
+            }
+        };
+        let font_size = table.style[index].font_size;
+        let res = split_by_width(value, max_width.clone(), None, font_size);
+
+        update_queue.push((index, res));
     }
 
-    for (index, w, h) in update_queue {
-        let table = &mut world.ui_tables[UIElement::UIText.t_index()];
-        let Some(table) = table.as_text_mut() else {
-            continue;
-        };
+    let UIElementTable::UITextTable(table) = &mut world.ui_tables[UIElement::UIText.t_index()]
+    else {
+        return;
+    };
 
-        table.dimension[index].w = w;
-        table.dimension[index].h = h;
+    for (index, lines) in update_queue {
+        table.lines[index] = lines;
+    }
+}
+
+pub fn system_text_dimension(world: &mut World) {
+    let UIElementTable::UITextTable(table) = &mut world.ui_tables[UIElement::UIText.t_index()]
+    else {
+        return;
+    };
+    for (index, _entity) in table.ids.iter().enumerate() {
+        if !table.is_dirty[index] {
+            continue;
+        }
+
+        let mut width: f32 = 0.;
+        let mut line_height: f32 = 0.;
+
+        let font = None;
+        let font_size = table.style[index].font_size;
+        let line_spacing = table.style[index].line_spacing;
+        let font_scale = 1.;
+        let line_number = table.lines[index].len();
+
+        for line in &table.lines[index] {
+            let dim = measure_text(line, font, font_size, font_scale);
+            width = width.max(dim.width);
+            line_height = dim.height;
+        }
+
+        let height = line_height * line_number as f32 + line_spacing * (line_number - 1) as f32;
+
+        table.dimension[index].w = width;
+        table.dimension[index].h = height;
+
+        table.is_dirty[index] = false;
     }
 }
 
@@ -161,7 +203,7 @@ pub fn system_dynamic_transform(world: &mut World) {
                 Some(entity) => {
                     let location = &world.ui_locations[*entity];
                     &world.ui_tables[UIElement::UIDiv.t_index()].dimension()[location.index]
-                },
+                }
                 None => &Dimension::from(screen_width(), screen_height()),
             };
 
@@ -316,7 +358,7 @@ pub fn system_dynamic_transform(world: &mut World) {
 pub fn system_transform(world: &mut World) {
     let mut pending_updates: Vec<(usize, usize, f32, f32)> = Vec::new();
     for (table_idx, table) in world.ui_tables.iter().enumerate() {
-        for (index, entity) in table.id().iter().enumerate() {
+        for (index, _entity) in table.id().iter().enumerate() {
             let pos = &table.position()[index];
 
             if let PositionType::Absolute = table.pos_type()[index] {
