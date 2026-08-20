@@ -15,4 +15,11 @@ pub struct Gradient {
     pub angle: f32,
 }
 
+pub enum FontKind {}
+impl FontKind {
+    pub fn as_font(&self) -> Option<&Font> {
+        None
+    }
+}
+
 pub type UIElementId = usize;

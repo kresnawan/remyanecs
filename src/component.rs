@@ -197,6 +197,7 @@ pub struct Style {
     pub color: UIColor,
     pub font: u32,
     pub font_size: u16,
+    pub line_spacing: f32,
     pub outline: f32,
     pub outline_color: Color,
     pub corner_radius: f32,
@@ -211,6 +212,7 @@ impl Style {
         outline: f32,
         outline_color: Color,
         corner_radius: f32,
+        line_spacing: f32
     ) -> Style {
         Style {
             bg_color,
@@ -220,6 +222,7 @@ impl Style {
             outline,
             outline_color,
             corner_radius,
+            line_spacing
         }
     }
 }
@@ -234,6 +237,7 @@ impl Default for Style {
             outline: 0.,
             outline_color: BLACK,
             corner_radius: 0.,
+            line_spacing: 0.
         }
     }
 }

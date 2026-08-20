@@ -55,7 +55,7 @@ pub enum UIVisual<'a> {
     UISwitch(&'a SwitchConfig),
     UISlot(&'a SlotState),
     UIRectangle(&'a Style),
-    UIText(&'a Style, Option<f32>, &'a String),
+    UIText(&'a Style, Option<f32>, &'a Vec<String>),
 }
 
 pub fn render(world: &World) {

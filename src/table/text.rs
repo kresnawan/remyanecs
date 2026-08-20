@@ -1,15 +1,19 @@
 use crate::{
     UIElementId,
     component::{
-        Button, ButtonConfig, Dimension, GlobalPosition, OnClickEvent, Parent, Position,
-        PositionType, Style, UIColor, ZIndex,
+        Dimension, GlobalPosition, Parent, Position, PositionType, Style, UIColor, ZIndex,
     },
-    helper::{draw_rectangle_extended, draw_text_extended, draw_text_extended_experimental},
+    helper::draw_text_extended,
     render_q::{UIRender, UIVisual},
-    world::World,
 };
 
 use macroquad::prelude::*;
+
+pub enum TextAlignment {
+    Left,
+    Center,
+    Right,
+}
 
 #[derive(Debug)]
 pub struct UITextTable {
@@ -25,6 +29,9 @@ pub struct UITextTable {
     pub max_width: Vec<Option<f32>>,
     pub style: Vec<Style>,
     pub value: Vec<String>,
+    pub lines: Vec<Vec<String>>,
+
+    pub is_dirty: Vec<bool>
 }
 
 impl UITextTable {
@@ -41,6 +48,8 @@ impl UITextTable {
             max_width: Vec::new(),
             style: Vec::new(),
             value: Vec::new(),
+            lines: Vec::new(),
+            is_dirty: Vec::new()
         }
     }
 }
@@ -51,7 +60,6 @@ pub fn render_text(render_data: &UIRender) {
     };
 
     let pos = render_data.global_pos;
-    let dim = render_data.dim;
 
     let color = if let UIColor::Fill(color) = config.color {
         color
@@ -59,16 +67,32 @@ pub fn render_text(render_data: &UIRender) {
         BLACK
     };
 
-    draw_text_extended_experimental(
-        text,
-        pos.x,
-        pos.y + dim.h,
-        max_width,
-        TextParams {
-            font: None,
-            font_size: config.font_size,
-            color: color,
-            ..Default::default()
-        },
-    );
+    let mut y = pos.y;
+    let line_dimension = measure_text(&text[0], None, config.font_size, 1.);
+
+    y += line_dimension.height;
+
+    for line in text {
+
+        let current_line_dimension = measure_text(line, None, config.font_size, 1.);
+
+        // let cx = render_data.dim.w / 2. - current_line_dimension.width / 2.;
+        let cx = render_data.dim.w - current_line_dimension.width;
+
+        draw_text_extended(
+            line,
+            cx + pos.x,
+            y,
+            max_width,
+            TextParams {
+                font: None,
+                font_size: config.font_size,
+                color: color,
+                ..Default::default()
+            },
+        );
+
+        y += line_dimension.height;
+        y += config.line_spacing;
+    }
 }

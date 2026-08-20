@@ -1,4 +1,4 @@
-use macroquad::prelude::*;
+use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
     UIElementId,
@@ -12,12 +12,51 @@ use crate::{
 };
 
 struct PendingLayoutUpdate {
-    table_idx: usize,
-    index: usize,
     new_width: Option<f32>,
     new_height: Option<f32>,
     new_x: Option<f32>,
     new_y: Option<f32>,
+}
+
+impl Default for PendingLayoutUpdate {
+    fn default() -> Self {
+        Self {
+            new_width: None,
+            new_height: None,
+            new_x: None,
+            new_y: None,
+        }
+    }
+}
+
+pub fn system_dirty_state(world: &mut World) {
+    let current_screen_size = screen_size();
+
+    if current_screen_size != world.current_screen_size {
+        world.is_updated = false;
+
+        for i in &mut world.ui_tables {
+            if let Some(dirty) = i.is_dirty_mut() {
+                for i in 0..dirty.len() {
+                    dirty[i] = true;
+                }
+            }
+        }
+
+        world.current_screen_size = current_screen_size;
+    } else {
+        if !world.is_updated {
+            for i in &mut world.ui_tables {
+                if let Some(dirty) = i.is_dirty_mut() {
+                    for i in 0..dirty.len() {
+                        dirty[i] = true;
+                    }
+                }
+            }
+
+            world.is_updated = true;
+        }
+    }
 }
 
 pub fn system_arrange_text(world: &mut World) {
@@ -94,16 +133,23 @@ pub fn system_text_dimension(world: &mut World) {
 
         table.dimension[index].w = width;
         table.dimension[index].h = height;
-
-        table.is_dirty[index] = false;
+        // table.is_dirty[index] = false;
     }
 }
 
 pub fn system_parent_display(world: &mut World) {
-    let mut pending_updates: Vec<PendingLayoutUpdate> = Vec::new();
+    for table_idx in 0..world.ui_tables.len() {
+        for index in 0..world.ui_tables[table_idx].id().len() {
+            let mut pending_updates = PendingLayoutUpdate::default();
+            let table = &world.ui_tables[table_idx];
 
-    for (table_idx, table) in world.ui_tables.iter().enumerate() {
-        for (index, entity) in table.id().iter().enumerate() {
+            let entity = table.id()[index];
+            if let Some(is_dirty) = table.is_dirty() {
+                if !is_dirty[index] {
+                    continue;
+                }
+            }
+
             if let Some(parent) = table.parent()[index] {
                 let parent_loc = world.ui_locations.get(parent).unwrap();
 
@@ -120,7 +166,7 @@ pub fn system_parent_display(world: &mut World) {
 
                         if let Some(childs) = world.ui_tables[0].childs() {
                             for (index, element_id) in childs[parent_loc.index].iter().enumerate() {
-                                if element_id == entity {
+                                if *element_id == entity {
                                     self_index = index;
                                 }
 
@@ -139,14 +185,12 @@ pub fn system_parent_display(world: &mut World) {
                                     let self_width = available_width / child_count as f32;
                                     let new_x = self_index as f32 * (self_width + gap);
 
-                                    pending_updates.push(PendingLayoutUpdate {
-                                        table_idx,
-                                        index,
+                                    pending_updates = PendingLayoutUpdate {
                                         new_width: Some(self_width),
                                         new_height: None,
                                         new_x: Some(new_x),
                                         new_y: None,
-                                    });
+                                    }
                                 }
 
                                 Direction::Vertical => {
@@ -157,14 +201,12 @@ pub fn system_parent_display(world: &mut World) {
                                     let self_height = available_height / child_count as f32;
                                     let new_y = self_index as f32 * (self_height + gap);
 
-                                    pending_updates.push(PendingLayoutUpdate {
-                                        table_idx,
-                                        index,
+                                    pending_updates = PendingLayoutUpdate {
                                         new_width: None,
                                         new_height: Some(self_height),
                                         new_x: None,
                                         new_y: Some(new_y),
-                                    });
+                                    }
                                 }
                             }
                         }
@@ -173,32 +215,37 @@ pub fn system_parent_display(world: &mut World) {
                     _ => {}
                 }
             }
-        }
-    }
 
-    for update in pending_updates {
-        let table = &mut world.ui_tables[update.table_idx];
+            let table = &mut world.ui_tables[table_idx];
 
-        if let Some(w) = update.new_width {
-            table.dimension_mut()[update.index].set_width(w);
-        }
-        if let Some(h) = update.new_height {
-            table.dimension_mut()[update.index].set_height(h);
-        }
-        if let Some(x) = update.new_x {
-            table.position_mut()[update.index].set_x(x);
-        }
-        if let Some(y) = update.new_y {
-            table.position_mut()[update.index].set_y(y);
+            if let Some(w) = pending_updates.new_width {
+                table.dimension_mut()[index].set_width(w);
+            }
+            if let Some(h) = pending_updates.new_height {
+                table.dimension_mut()[index].set_height(h);
+            }
+            if let Some(x) = pending_updates.new_x {
+                table.position_mut()[index].set_x(x);
+            }
+            if let Some(y) = pending_updates.new_y {
+                table.position_mut()[index].set_y(y);
+            }
         }
     }
 }
 
 pub fn system_dynamic_transform(world: &mut World) {
-    let mut pending_updates: Vec<PendingLayoutUpdate> = Vec::new();
+    for table_idx in 0..world.ui_tables.len() {
+        for index in 0..world.ui_tables[table_idx].id().len() {
+            let table = &world.ui_tables[table_idx];
+            let mut pending_updates = PendingLayoutUpdate::default();
 
-    for (table_idx, table) in world.ui_tables.iter().enumerate() {
-        for (index, _entity) in table.id().iter().enumerate() {
+            if let Some(is_dirty) = table.is_dirty() {
+                if !is_dirty[index] {
+                    continue;
+                }
+            }
+
             let parent_dim = match &table.parent()[index] {
                 Some(entity) => {
                     let location = &world.ui_locations[*entity];
@@ -212,24 +259,16 @@ pub fn system_dynamic_transform(world: &mut World) {
             if let Some(dyn_w) = &dim.dyn_w {
                 match dyn_w {
                     DynDim::Full => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
+                        pending_updates = PendingLayoutUpdate {
                             new_width: Some(parent_dim.w),
-                            new_height: None,
-                            new_x: None,
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynDim::Percent(p) => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
+                        pending_updates = PendingLayoutUpdate {
                             new_width: Some(parent_dim.w * p),
-                            new_height: None,
-                            new_x: None,
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     _ => {}
                 }
@@ -238,24 +277,16 @@ pub fn system_dynamic_transform(world: &mut World) {
             if let Some(dyn_h) = &dim.dyn_h {
                 match dyn_h {
                     DynDim::Full => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_height: Some(parent_dim.h),
-                            new_x: None,
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynDim::Percent(p) => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_height: Some(parent_dim.h * p),
-                            new_x: None,
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     _ => {}
                 }
@@ -264,34 +295,22 @@ pub fn system_dynamic_transform(world: &mut World) {
             if let Some(dyn_x) = &pos.dyn_x {
                 match dyn_x {
                     DynPos::Start => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_x: Some(0.),
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynPos::Center => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_x: Some(parent_dim.w / 2. - dim.w / 2.),
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynPos::End => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_x: Some(parent_dim.w - dim.w),
-                            new_y: None,
-                        });
+                            ..pending_updates
+                        };
                     }
 
                     _ => {}
@@ -301,91 +320,81 @@ pub fn system_dynamic_transform(world: &mut World) {
             if let Some(dyn_y) = &pos.dyn_y {
                 match dyn_y {
                     DynPos::Start => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
-                            new_x: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_y: Some(0.),
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynPos::Center => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
-                            new_x: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_y: Some(parent_dim.h / 2. - dim.h / 2.),
-                        });
+                            ..pending_updates
+                        };
                     }
                     DynPos::End => {
-                        pending_updates.push(PendingLayoutUpdate {
-                            table_idx,
-                            index,
-                            new_width: None,
-                            new_height: None,
-                            new_x: None,
+                        pending_updates = PendingLayoutUpdate {
                             new_y: Some(parent_dim.h - dim.h),
-                        });
+                            ..pending_updates
+                        };
                     }
 
                     _ => {}
                 }
             }
-        }
-    }
 
-    for update in pending_updates {
-        let table = &mut world.ui_tables[update.table_idx];
+            let table = &mut world.ui_tables[table_idx];
 
-        if let Some(w) = update.new_width {
-            table.dimension_mut()[update.index].set_width(w);
-        }
-        if let Some(h) = update.new_height {
-            table.dimension_mut()[update.index].set_height(h);
-        }
-        if let Some(x) = update.new_x {
-            table.position_mut()[update.index].set_x(x);
-        }
-        if let Some(y) = update.new_y {
-            table.position_mut()[update.index].set_y(y);
+            if let Some(w) = pending_updates.new_width {
+                table.dimension_mut()[index].set_width(w);
+            }
+            if let Some(h) = pending_updates.new_height {
+                table.dimension_mut()[index].set_height(h);
+            }
+            if let Some(x) = pending_updates.new_x {
+                table.position_mut()[index].set_x(x);
+            }
+            if let Some(y) = pending_updates.new_y {
+                table.position_mut()[index].set_y(y);
+            }
         }
     }
 }
 
 pub fn system_transform(world: &mut World) {
-    let mut pending_updates: Vec<(usize, usize, f32, f32)> = Vec::new();
-    for (table_idx, table) in world.ui_tables.iter().enumerate() {
-        for (index, _entity) in table.id().iter().enumerate() {
+    for table_idx in 0..world.ui_tables.len() {
+        for index in 0..world.ui_tables[table_idx].id().len() {
+            let pending_update: (f32, f32);
+            let table = &world.ui_tables[table_idx];
+
+            if let Some(is_dirty) = table.is_dirty() {
+                if !is_dirty[index] {
+                    continue;
+                }
+            }
+
             let pos = &table.position()[index];
 
             if let PositionType::Absolute = table.pos_type()[index] {
-                pending_updates.push((table_idx, index, pos.x, pos.y));
-                continue;
-            }
-
-            if let Some(parent) = &table.parent()[index] {
+                pending_update = (pos.x, pos.y);
+            } else if let Some(parent) = &table.parent()[index] {
                 let parent_loc = &world.ui_locations[*parent];
                 let parent_global_pos = &world.ui_tables[0].global_pos()[parent_loc.index];
-                pending_updates.push((
-                    table_idx,
-                    index,
-                    parent_global_pos.x + pos.x,
-                    parent_global_pos.y + pos.y,
-                ));
-
-                continue;
+                pending_update = (parent_global_pos.x + pos.x, parent_global_pos.y + pos.y);
+            } else {
+                pending_update = (pos.x, pos.y);
             }
 
-            pending_updates.push((table_idx, index, pos.x, pos.y));
-        }
-    }
+            let table = &mut world.ui_tables[table_idx];
 
-    for (table_idx, entity, x, y) in pending_updates {
-        let table = &mut world.ui_tables[table_idx];
-        table.global_pos_mut()[entity] = GlobalPosition { x, y }
+            if let Some(is_dirty) = table.is_dirty_mut() {
+                is_dirty[index] = false;
+            }
+
+            table.global_pos_mut()[index] = GlobalPosition {
+                x: pending_update.0,
+                y: pending_update.1,
+            }
+        }
     }
 }
 

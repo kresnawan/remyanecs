@@ -20,12 +20,14 @@ pub struct UIButtonTable {
     pub position_type: Vec<PositionType>,
     pub dimension: Vec<Dimension>,
     pub parent: Vec<Option<Parent>>,
-    
+
     pub on_click_event: Vec<Option<OnClickEvent>>,
     pub disabled: Vec<bool>,
     pub visible: Vec<bool>,
     pub button_config: Vec<ButtonConfig>,
     pub button: Vec<Button>,
+
+    pub is_dirty: Vec<bool>
 }
 
 impl UIButtonTable {
@@ -43,6 +45,8 @@ impl UIButtonTable {
             visible: Vec::new(),
             button_config: Vec::new(),
             button: Vec::new(),
+
+            is_dirty: Vec::new()
         }
     }
 }
@@ -125,24 +129,18 @@ pub fn spawn_std_button(
         dim,
         ButtonConfig {
             text: text.to_owned(),
-            style: Style::new(
-                UIColor::Fill(GREEN),
-                UIColor::Fill(WHITE),
-                1,
-                36,
-                0.,
-                BLANK,
-                5.,
-            ),
-            hover_style: Some(Style::new(
-                UIColor::Fill(PURPLE),
-                UIColor::Fill(WHITE),
-                1,
-                36,
-                0.,
-                BLANK,
-                5.,
-            )),
+            style: Style {
+                bg_color: UIColor::Fill(GREEN),
+                font_size: 36,
+                corner_radius: 5.,
+                ..Default::default()
+            },
+            hover_style: Some(Style {
+                bg_color: UIColor::Fill(PURPLE),
+                font_size: 36,
+                corner_radius: 5.,
+                ..Default::default()
+            }),
         },
         parent,
         on_click,

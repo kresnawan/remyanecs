@@ -1,8 +1,8 @@
 use crate::{
     UIElementId,
     component::{
-        Button, ButtonConfig, Dimension, GlobalPosition, OnClickEvent, Parent, Position,
-        PositionType, Style, UIColor, ZIndex,
+        Dimension, GlobalPosition, OnClickEvent, Parent, Position, PositionType, Style, UIColor,
+        ZIndex,
     },
     helper::draw_rectangle_extended,
     render_q::{UIRender, UIVisual},
@@ -121,15 +121,13 @@ pub fn spawn_std_switch(
         parent,
         on_click,
         SwitchConfig {
-            style: Style::new(
-                UIColor::Fill(DARKGRAY),
-                UIColor::Fill(ORANGE),
-                1,
-                0,
-                0.,
-                BLANK,
-                5.,
-            ),
+            style: Style {
+                bg_color: UIColor::Fill(DARKGRAY),
+                color: UIColor::Fill(ORANGE),
+                corner_radius: 5.,
+                ..Default::default()
+            },
+
             hover_style: None,
         },
     )

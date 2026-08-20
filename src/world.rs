@@ -23,6 +23,9 @@ pub struct World {
     pub hoverable_elements: Vec<UIElement>,
     pub hovered_entity: Option<UIElementId>,
 
+    pub current_screen_size: (f32, f32),
+    pub is_updated: bool,
+
     pub ui_locations: Vec<UILocation>,
     pub ui_tables: Vec<UIElementTable>,
 }
@@ -50,6 +53,8 @@ impl World {
             next_id: 0,
             next_z_index: 0,
             hoverable_elements: vec![UIElement::UIButton, UIElement::UISwitch],
+            current_screen_size: (0., 0.),
+            is_updated: false,
             hovered_entity: None,
             ui_locations: Vec::new(),
             ui_tables,
@@ -99,6 +104,7 @@ impl World {
             table.position_type.push(pos.1);
             table.visible.push(true);
             table.z_index.push(current_z);
+            table.is_dirty.push(true);
         }
 
         if let Some(parent) = parent {
@@ -144,6 +150,7 @@ impl World {
             table.div.push(Div);
             table.display.push(display);
             table.childs.push(Vec::new());
+            table.is_dirty.push(true);
         }
 
         if let Some(parent) = parent {
@@ -237,6 +244,8 @@ impl World {
             table.max_width.push(max_width);
             table.style.push(style);
             table.value.push(value.to_string());
+            table.lines.push(Vec::new());
+            table.is_dirty.push(true);
         }
 
         if let Some(parent) = parent {

@@ -38,6 +38,26 @@ impl UIElementTable {
         }
     }
 
+    pub fn is_dirty(&self) -> Option<&Vec<bool>> {
+        match self {
+            UIElementTable::UITextTable(table) => Some(&table.is_dirty),
+            UIElementTable::UIButtonTable(table) => Some(&table.is_dirty),
+            UIElementTable::UIDivTable(table) => Some(&table.is_dirty),
+
+            _ => None,
+        }
+    }
+
+    pub fn is_dirty_mut(&mut self) -> Option<&mut Vec<bool>> {
+        match self {
+            UIElementTable::UITextTable(table) => Some(&mut table.is_dirty),
+            UIElementTable::UIButtonTable(table) => Some(&mut table.is_dirty),
+            UIElementTable::UIDivTable(table) => Some(&mut table.is_dirty),
+
+            _ => None,
+        }
+    }
+
     pub fn as_text_mut(&mut self) -> Option<&mut UITextTable> {
         if let UIElementTable::UITextTable(table) = self {
             Some(table)
@@ -73,7 +93,7 @@ impl UIElementTable {
                 UIVisual::UIText(
                     &table.style[index],
                     table.max_width[index],
-                    &table.value[index],
+                    &table.lines[index],
                 ),
                 index,
             )),
@@ -109,6 +129,7 @@ impl UIElementTable {
             UIElementTable::UIRectangleTable(table) => &table.z_index,
         }
     }
+
     pub fn position(&self) -> &Vec<Position> {
         match self {
             UIElementTable::UIButtonTable(table) => &table.position,

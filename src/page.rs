@@ -10,8 +10,9 @@ use crate::{
     },
     render_q::render,
     system::{
-        system_dynamic_transform, system_handle_ui_events, system_hover, system_on_click,
-        system_parent_display, system_text_dimension, system_transform,
+        system_arrange_text, system_dirty_state, system_dynamic_transform, system_handle_ui_events,
+        system_hover, system_on_click, system_parent_display, system_text_dimension,
+        system_transform,
     },
     table::{button::spawn_std_button, slot::SlotIndex, switch::spawn_std_switch},
     world::World,
@@ -39,8 +40,6 @@ impl MainMenu {
             Display::Normal,
             None,
         );
-
-        
 
         spawn_std_switch(
             &mut world,
@@ -104,10 +103,7 @@ impl MainMenu {
         );
 
         world.spawn_rectangle(
-            (
-                Position::new(),
-                PositionType::Relative,
-            ),
+            (Position::new(), PositionType::Relative),
             Dimension::new().w(200.).dyn_h(DynDim::Full),
             Style {
                 bg_color: UIColor::Fill(BLUE),
@@ -121,7 +117,7 @@ impl MainMenu {
 
         world.spawn_text(
             (
-                Position::new(),
+                Position::new().dyn_x(DynPos::Center),
                 PositionType::Relative,
             ),
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam dictum nunc quis 
@@ -129,7 +125,7 @@ impl MainMenu {
             ridiculus mus. Fusce dapibus turpis augue, eget porttitor nisl rutrum id. Vivamus sed luctus 
             lectus. Praesent eget ante vel justo dapibus pharetra nec pretium sapien. Fusce vitae euismod 
             sem. Aliquam malesuada nibh erat, vitae laoreet nunc porta id. Praesent ornare, velit ut tempor 
-            pretium, velit ex sowbdebsineinifnineiooneonofnonxosnonwosnwo erat. Suspendisse luctus mauris 
+            pretium, velit ex erat. Suspendisse luctus mauris 
             magna. Donec pretium semper pellentesque. In felis tellus, viverra sed velit et, suscipit dictum 
             massa. Phasellus ultricies porta justo non rhoncus. Etiam rutrum nibh vitae accumsan euismod. 
             In id diam congue, malesuada leo sed, mollis ipsum.",
@@ -137,11 +133,9 @@ impl MainMenu {
                 font_size: 20,
                 ..Default::default()
             },
-            Some(200.),
+            None,
             None,
         );
-
-        
 
         MainMenu {
             world,
@@ -152,10 +146,15 @@ impl MainMenu {
 
 impl Page for MainMenu {
     fn update(&mut self) {
+        system_dirty_state(&mut self.world);
+
+        system_arrange_text(&mut self.world);
         system_text_dimension(&mut self.world);
-        system_parent_display(&mut self.world);
+
         system_dynamic_transform(&mut self.world);
+        system_parent_display(&mut self.world);
         system_transform(&mut self.world);
+
         system_hover(&mut self.world);
         system_on_click(&mut self.world, &mut self.ui_events);
         system_handle_ui_events(&mut self.world, &mut self.ui_events);

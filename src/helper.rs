@@ -189,7 +189,7 @@ pub fn draw_text_extended(text: &str, x: f32, y: f32, max_width: Option<f32>, pa
             if dims.width > max_width {
                 draw_text_ex(&current_line, x, y, params.clone());
 
-                y += dims.height + 6.0;
+                y += dims.height;
 
                 current_line = word.to_string();
             } else {
@@ -205,35 +205,36 @@ pub fn draw_text_extended(text: &str, x: f32, y: f32, max_width: Option<f32>, pa
     }
 }
 
-pub fn draw_text_extended_experimental(text: &str, x: f32, y: f32, max_width: Option<f32>, params: TextParams) {
-    let mut y = y;
+pub fn split_by_width<'a>(
+    text: &String,
+    max_width: f32,
+    font: Option<&Font>,
+    font_size: u16,
+) -> Vec<String> {
     let mut current_line = String::new();
+    let mut result: Vec<String> = Vec::new();
 
-    if let Some(max_width) = max_width {
-        for word in text.split_whitespace() {
-            let test_line = if current_line.is_empty() {
-                word.to_string()
-            } else {
-                format!("{} {}", current_line, word)
-            };
+    for word in text.split_whitespace() {
+        let test_line = if current_line.is_empty() {
+            word.to_string()
+        } else {
+            format!("{} {}", current_line, word)
+        };
 
-            let dims = measure_text(&test_line, None, params.font_size, 1.0);
+        let dims = measure_text(&test_line, font, font_size, 1.0);
 
-            if dims.width > max_width {
-                draw_text_ex(&current_line, x, y, params.clone());
+        if dims.width > max_width {
+            result.push(current_line);
 
-                y += dims.height + 6.0;
-
-                current_line = word.to_string();
-            } else {
-                current_line = test_line;
-            }
+            current_line = word.to_string();
+        } else {
+            current_line = test_line;
         }
-
-        if !current_line.is_empty() {
-            draw_text_ex(&current_line, x, y, params);
-        }
-    } else {
-        draw_text_ex(text, x, y, params);
     }
+
+    if !current_line.is_empty() {
+        result.push(current_line);
+    }
+
+    result
 }
