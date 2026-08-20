@@ -85,7 +85,7 @@ pub fn render(world: &World) {
             UIVisual::UISwitch(_config) => render_switch(&element),
             UIVisual::UIRectangle(_config) => render_rectangle(&element),
             UIVisual::UISlot(_config) => render_slot(&element),
-            UIVisual::UIText(_, _, _) => render_text(&element),
+            UIVisual::UIText(_, _, _) => render_text(&element, world.font_registry.clone()),
         }
     }
 

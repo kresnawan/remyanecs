@@ -1,13 +1,15 @@
+use std::collections::HashMap;
+
 use macroquad::prelude::*;
 
 pub mod component;
 pub mod helper;
 pub mod page;
+pub mod render_q;
 pub mod system;
+pub mod table;
 pub mod ui;
 pub mod world;
-pub mod table;
-pub mod render_q;
 
 #[derive(Clone, Debug)]
 pub struct Gradient {
@@ -15,11 +17,15 @@ pub struct Gradient {
     pub angle: f32,
 }
 
-pub enum FontKind {}
-impl FontKind {
-    pub fn as_font(&self) -> Option<&Font> {
-        None
-    }
+pub struct FontRegistry {
+    pub fonts: HashMap<FontKind, Font>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum FontKind {
+    NunitoBlack,
+    NunitoBold,
+    NunitoRegular,
 }
 
 pub type UIElementId = usize;

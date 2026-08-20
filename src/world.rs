@@ -1,10 +1,10 @@
+use std::sync::Arc;
+
 use crate::{
-    UIElementId,
-    component::{
+    FontRegistry, UIElementId, component::{
         Button, ButtonConfig, Dimension, Display, Div, GlobalPosition, OnClickEvent, Parent,
         Position, PositionType, Style,
-    },
-    table::{
+    }, table::{
         UIElementTable,
         button::UIButtonTable,
         div::UIDivTable,
@@ -12,8 +12,7 @@ use crate::{
         slot::{SlotIndex, SlotState, UISlotTable},
         switch::{SwitchConfig, UISwitchTable},
         text::UITextTable,
-    },
-    ui::{UIElement, UILocation},
+    }, ui::{UIElement, UILocation}
 };
 
 pub struct World {
@@ -23,6 +22,8 @@ pub struct World {
     pub hoverable_elements: Vec<UIElement>,
     pub hovered_entity: Option<UIElementId>,
 
+    pub font_registry: Arc<FontRegistry>,
+
     pub current_screen_size: (f32, f32),
     pub is_updated: bool,
 
@@ -31,7 +32,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new() -> World {
+    pub fn new(font_registry: Arc<FontRegistry>) -> World {
         let ui_div_table = UIElementTable::UIDivTable(UIDivTable::new());
         let ui_button_table = UIElementTable::UIButtonTable(UIButtonTable::new());
         let ui_switch_table = UIElementTable::UISwitchTable(UISwitchTable::new());
@@ -53,6 +54,7 @@ impl World {
             next_id: 0,
             next_z_index: 0,
             hoverable_elements: vec![UIElement::UIButton, UIElement::UISwitch],
+            font_registry,
             current_screen_size: (0., 0.),
             is_updated: false,
             hovered_entity: None,

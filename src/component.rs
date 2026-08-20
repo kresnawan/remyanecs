@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-use crate::{Gradient, UIElementId};
+use crate::{FontKind, Gradient, UIElementId};
 
 #[derive(Debug)]
 pub struct ButtonConfig {
@@ -195,7 +195,7 @@ pub enum UIEvent {
 pub struct Style {
     pub bg_color: UIColor,
     pub color: UIColor,
-    pub font: u32,
+    pub font: FontKind,
     pub font_size: u16,
     pub line_spacing: f32,
     pub outline: f32,
@@ -207,7 +207,7 @@ impl Style {
     pub fn new(
         bg_color: UIColor,
         color: UIColor,
-        font: u32,
+        font: FontKind,
         font_size: u16,
         outline: f32,
         outline_color: Color,
@@ -232,7 +232,7 @@ impl Default for Style {
         Self {
             bg_color: UIColor::Fill(WHITE),
             color: UIColor::Fill(BLACK),
-            font: 0,
+            font: FontKind::NunitoRegular,
             font_size: 24,
             outline: 0.,
             outline_color: BLACK,

@@ -1,10 +1,9 @@
+use std::sync::Arc;
+
 use crate::{
-    UIElementId,
-    component::{
+    FontRegistry, UIElementId, component::{
         Dimension, GlobalPosition, Parent, Position, PositionType, Style, UIColor, ZIndex,
-    },
-    helper::draw_text_extended,
-    render_q::{UIRender, UIVisual},
+    }, helper::draw_text_extended, render_q::{UIRender, UIVisual}
 };
 
 use macroquad::prelude::*;
@@ -31,7 +30,7 @@ pub struct UITextTable {
     pub value: Vec<String>,
     pub lines: Vec<Vec<String>>,
 
-    pub is_dirty: Vec<bool>
+    pub is_dirty: Vec<bool>,
 }
 
 impl UITextTable {
@@ -49,12 +48,12 @@ impl UITextTable {
             style: Vec::new(),
             value: Vec::new(),
             lines: Vec::new(),
-            is_dirty: Vec::new()
+            is_dirty: Vec::new(),
         }
     }
 }
 
-pub fn render_text(render_data: &UIRender) {
+pub fn render_text(render_data: &UIRender, font: Arc<FontRegistry>) {
     let UIVisual::UIText(config, max_width, text) = render_data.vis else {
         return;
     };
@@ -73,10 +72,8 @@ pub fn render_text(render_data: &UIRender) {
     y += line_dimension.height;
 
     for line in text {
-
         let current_line_dimension = measure_text(line, None, config.font_size, 1.);
 
-        // let cx = render_data.dim.w / 2. - current_line_dimension.width / 2.;
         let cx = render_data.dim.w - current_line_dimension.width;
 
         draw_text_extended(
@@ -85,7 +82,7 @@ pub fn render_text(render_data: &UIRender) {
             y,
             max_width,
             TextParams {
-                font: None,
+                font: font.fonts.get(&config.font),
                 font_size: config.font_size,
                 color: color,
                 ..Default::default()

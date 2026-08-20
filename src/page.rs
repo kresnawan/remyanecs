@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
 use macroquad::{
     color::{BLUE, RED, WHITE},
     window::clear_background,
 };
 
 use crate::{
+    FontRegistry,
     component::{
         Dimension, Direction, Display, DynDim, DynPos, Position, PositionType, Style, UIColor,
         UIEvent,
@@ -19,6 +22,7 @@ use crate::{
 };
 
 pub trait Page {
+    fn new(font_registry: Arc<FontRegistry>) -> Self;
     fn update(&mut self);
     fn draw(&self);
 }
@@ -28,9 +32,9 @@ pub struct MainMenu {
     ui_events: Vec<UIEvent>,
 }
 
-impl MainMenu {
-    pub fn new() -> MainMenu {
-        let mut world = World::new();
+impl Page for MainMenu {
+    fn new(font_registry: Arc<FontRegistry>) -> MainMenu {
+        let mut world = World::new(font_registry);
 
         let container = world.spawn_div(
             (Position::center(), PositionType::Absolute),
@@ -142,9 +146,7 @@ impl MainMenu {
             ui_events: Vec::new(),
         }
     }
-}
 
-impl Page for MainMenu {
     fn update(&mut self) {
         system_dirty_state(&mut self.world);
 

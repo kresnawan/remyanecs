@@ -1,9 +1,18 @@
+use std::{collections::HashMap, sync::Arc};
+
 use macroquad::prelude::*;
-use remyan_client_ecs::page::{MainMenu, Page};
+use remyan_client_ecs::{
+    FontRegistry,
+    page::{MainMenu, Page},
+};
 
 #[macroquad::main("RemyanECS")]
 async fn main() {
-    let mut main_menu = MainMenu::new();
+    let font_registry = FontRegistry {
+        fonts: HashMap::new(),
+    };
+
+    let mut main_menu = MainMenu::new(Arc::new(font_registry));
     loop {
         main_menu.update();
         main_menu.draw();
