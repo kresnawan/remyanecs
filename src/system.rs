@@ -1,7 +1,6 @@
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
-    UIElementId,
     component::{
         Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent,
     },
@@ -435,42 +434,72 @@ pub fn system_hover(world: &mut World) {
     world.hovered_entity = hovered_entity;
 }
 
-pub fn system_on_click(world: &mut World, ui_events: &mut Vec<UIEvent>) {
-    let mut update_queue: Vec<(usize, UIElementId, bool)> = Vec::new();
+pub fn system_on_click(world: &mut World) {
+    if is_mouse_button_released(MouseButton::Left) {
+        if let Some(entity) = world.hovered_entity {
+            let location = &world.ui_locations[entity];
+            let table = &mut world.ui_tables[location.table.t_index()];
 
-    for i in &world.hoverable_elements {
-        let table = &world.ui_tables[i.t_index()];
-        for (index, entity) in table.id().iter().enumerate() {
+            match table {
+                UIElementTable::UISwitchTable(table) => {
+                    table.is_on[location.index] = !table.is_on[location.index]
+                }
+
+                UIElementTable::UITextInputTable(_) => {
+                    world.focused_entity = Some(entity);
+                }
+
+                _ => {}
+            }
+        } else {
+            world.focused_entity = None;
+        }
+    }
+}
+
+pub fn system_on_click_event(world: &mut World, ui_events: &mut Vec<UIEvent>) {
+    for table_idx in 0..world.hoverable_elements.len() {
+        for element_idx in 0..world.ui_tables[table_idx].id().len() {
+            let table = &mut world.ui_tables[table_idx];
+
             let is_hovered = if let Some(hovered_entity) = world.hovered_entity {
-                hovered_entity == *entity
+                hovered_entity == table.id()[element_idx]
             } else {
                 false
             };
 
             if is_mouse_button_released(MouseButton::Left) && is_hovered {
-                match table {
-                    UIElementTable::UISwitchTable(table) => {
-                        update_queue.push((i.t_index(), index, !table.is_on[index]));
-                    }
-
-                    _ => {}
-                }
-
                 if let Some(on_click) = table.on_click_event() {
-                    if let Some(event) = &on_click[index] {
+                    if let Some(event) = &on_click[element_idx] {
                         ui_events.push(event.0.clone());
                     }
                 }
             }
         }
     }
+}
 
-    for update in update_queue {
-        let table = &mut world.ui_tables[update.0];
-        match table {
-            UIElementTable::UISwitchTable(table) => table.is_on[update.1] = update.2,
+pub fn system_text_input(world: &mut World) {
+    if let Some(entity) = world.focused_entity {
+        let location = &world.ui_locations[entity];
+        let table = &mut world.ui_tables[location.table.t_index()];
 
-            _ => {}
+        if let UIElementTable::UITextInputTable(table) = table {
+            while let Some(char) = get_char_pressed() {
+                if char.is_ascii_graphic() || char == ' ' {
+                    if let Some(max_length) = table.max_length[location.index] {
+                        if table.value[location.index].len() < max_length {
+                            table.value[location.index].push(char);
+                        }
+                    } else {
+                        table.value[location.index].push(char);
+                    }
+                }
+            }
+
+            if is_key_pressed(KeyCode::Backspace) {
+                table.value[location.index].pop();
+            }
         }
     }
 }

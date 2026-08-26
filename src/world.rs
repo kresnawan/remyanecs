@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
 use crate::{
-    FontRegistry, UIElementId, component::{
+    FontRegistry, UIElementId,
+    component::{
         Button, ButtonConfig, Dimension, Display, Div, GlobalPosition, OnClickEvent, Parent,
         Position, PositionType, Style,
-    }, table::{
+    },
+    table::{
         UIElementTable,
         button::UIButtonTable,
         div::UIDivTable,
@@ -12,7 +14,9 @@ use crate::{
         slot::{SlotIndex, SlotState, UISlotTable},
         switch::{SwitchConfig, UISwitchTable},
         text::UITextTable,
-    }, ui::{UIElement, UILocation}
+        text_input::{TextInputConfig, UITextInputTable},
+    },
+    ui::{UIElement, UILocation},
 };
 
 pub struct World {
@@ -20,7 +24,9 @@ pub struct World {
     pub next_z_index: u32,
 
     pub hoverable_elements: Vec<UIElement>,
+
     pub hovered_entity: Option<UIElementId>,
+    pub focused_entity: Option<UIElementId>,
 
     pub font_registry: Arc<FontRegistry>,
 
@@ -41,6 +47,8 @@ impl World {
         let ui_slot_table = UIElementTable::UISlotTable(UISlotTable::new());
         let ui_rect_table = UIElementTable::UIRectangleTable(UIRectangleTable::new());
 
+        let ui_text_input_table = UIElementTable::UITextInputTable(UITextInputTable::new());
+
         let ui_tables = vec![
             ui_div_table,
             ui_button_table,
@@ -48,16 +56,22 @@ impl World {
             ui_text_table,
             ui_slot_table,
             ui_rect_table,
+            ui_text_input_table,
         ];
 
         World {
             next_id: 0,
             next_z_index: 0,
-            hoverable_elements: vec![UIElement::UIButton, UIElement::UISwitch],
+            hoverable_elements: vec![
+                UIElement::UIButton,
+                UIElement::UISwitch,
+                UIElement::UITextInput,
+            ],
             font_registry,
             current_screen_size: (0., 0.),
             is_updated: false,
             hovered_entity: None,
+            focused_entity: None,
             ui_locations: Vec::new(),
             ui_tables,
         }
@@ -180,7 +194,7 @@ impl World {
             &mut self.ui_tables[UIElement::UISwitch.t_index()]
         {
             self.ui_locations.push(UILocation {
-                table: UIElement::UIDiv,
+                table: UIElement::UISwitch,
                 index: table.ids.len(),
             });
 
@@ -332,6 +346,52 @@ impl World {
             table.visible.push(true);
             table.state.push(SlotState { player: None });
             table.index.push(index);
+        }
+
+        if let Some(parent) = parent {
+            self.add_parent_child(current_id, parent);
+        }
+
+        self.next_id += 1;
+        self.next_z_index += 1;
+
+        return current_id;
+    }
+
+    pub fn spawn_text_input(
+        &mut self,
+        pos: (Position, PositionType),
+        dim: Dimension,
+        config: TextInputConfig,
+        max_length: Option<usize>,
+        parent: Option<UIElementId>,
+    ) -> UIElementId {
+        let current_id = self.next_id.clone();
+        let current_z = self.next_z_index.clone();
+
+        if let UIElementTable::UITextInputTable(table) =
+            &mut self.ui_tables[UIElement::UITextInput.t_index()]
+        {
+            self.ui_locations.push(UILocation {
+                table: UIElement::UITextInput,
+                index: table.ids.len(),
+            });
+
+            table.ids.push(current_id);
+            table.global_pos.push(GlobalPosition {
+                x: pos.0.x,
+                y: pos.0.x,
+            });
+            table.position.push(pos.0);
+            table.z_index.push(current_z);
+            table.position_type.push(pos.1);
+            table.dimension.push(dim);
+            table.parent.push(parent);
+            table.visible.push(true);
+            table.max_length.push(max_length);
+            table.config.push(config);
+            table.value.push(String::new());
+            table.is_dirty.push(true);
         }
 
         if let Some(parent) = parent {

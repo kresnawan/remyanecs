@@ -87,11 +87,16 @@ pub fn render_switch(render_data: &UIRender) {
     } else {
         (pos.x, pos.y)
     };
-    let switch_color = if render_data.is_on {
+
+    let mut switch_color = if render_data.is_on {
         active_style.color.as_fill()
     } else {
         GRAY
     };
+
+    if render_data.is_disabled {
+        switch_color.a = 0.5;
+    }
 
     draw_rectangle_extended(
         switch_pos.0,

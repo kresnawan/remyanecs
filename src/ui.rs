@@ -5,7 +5,8 @@ pub enum UIElement {
     UISwitch,
     UIText,
     UISlot,
-    UIRectangle
+    UIRectangle,
+    UITextInput
 }
 
 impl UIElement {
@@ -16,7 +17,8 @@ impl UIElement {
             UIElement::UISwitch => 2,
             UIElement::UIText => 3,
             UIElement::UISlot => 4,
-            UIElement::UIRectangle => 5
+            UIElement::UIRectangle => 5,
+            UIElement::UITextInput => 6
         }
     }
 }

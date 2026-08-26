@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use macroquad::{
-    color::{BLUE, RED, WHITE},
+    color::{DARKBLUE, RED, WHITE},
     window::clear_background,
 };
 
@@ -14,10 +14,13 @@ use crate::{
     render_q::render,
     system::{
         system_arrange_text, system_dirty_state, system_dynamic_transform, system_handle_ui_events,
-        system_hover, system_on_click, system_parent_display, system_text_dimension,
-        system_transform,
+        system_hover, system_on_click, system_on_click_event, system_parent_display,
+        system_text_dimension, system_text_input, system_transform,
     },
-    table::{button::spawn_std_button, slot::SlotIndex, switch::spawn_std_switch},
+    table::{
+        button::spawn_std_button, slot::SlotIndex, switch::spawn_std_switch,
+        text_input::TextInputConfig,
+    },
     world::World,
 };
 
@@ -106,18 +109,18 @@ impl Page for MainMenu {
             None,
         );
 
-        world.spawn_rectangle(
-            (Position::new(), PositionType::Relative),
-            Dimension::new().w(200.).dyn_h(DynDim::Full),
-            Style {
-                bg_color: UIColor::Fill(BLUE),
-                outline: 0.,
-                outline_color: WHITE,
-                corner_radius: 5.,
-                ..Default::default()
-            },
-            None,
-        );
+        // world.spawn_rectangle(
+        //     (Position::new(), PositionType::Relative),
+        //     Dimension::new().w(200.).dyn_h(DynDim::Full),
+        //     Style {
+        //         bg_color: UIColor::Fill(BLUE),
+        //         outline: 0.,
+        //         outline_color: WHITE,
+        //         corner_radius: 5.,
+        //         ..Default::default()
+        //     },
+        //     None,
+        // );
 
         world.spawn_text(
             (
@@ -141,6 +144,30 @@ impl Page for MainMenu {
             None,
         );
 
+        world.spawn_text_input(
+            (Position::center(), PositionType::Relative),
+            Dimension::new().w(100.).h(50.),
+            TextInputConfig {
+                on_focus_style: Style {
+                    bg_color: UIColor::Fill(DARKBLUE),
+                    color: UIColor::Fill(WHITE),
+                    font_size: 24,
+                    outline: 1.,
+                    outline_color: WHITE,
+                    ..Default::default()
+                },
+                style: Style {
+                    bg_color: UIColor::Fill(DARKBLUE),
+                    color: UIColor::Fill(WHITE),
+                    font_size: 24,
+                    ..Default::default()
+                },
+                on_hover_style: None,
+            },
+            Some(6),
+            None,
+        );
+
         MainMenu {
             world,
             ui_events: Vec::new(),
@@ -158,7 +185,12 @@ impl Page for MainMenu {
         system_transform(&mut self.world);
 
         system_hover(&mut self.world);
-        system_on_click(&mut self.world, &mut self.ui_events);
+
+        system_on_click(&mut self.world);
+        system_on_click_event(&mut self.world, &mut self.ui_events);
+
+        system_text_input(&mut self.world);
+
         system_handle_ui_events(&mut self.world, &mut self.ui_events);
     }
     fn draw(&self) {

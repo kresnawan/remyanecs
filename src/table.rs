@@ -15,7 +15,7 @@ use crate::{
     render_q::{UIRender, UIVisual},
     table::{
         button::UIButtonTable, div::UIDivTable, rectangle::UIRectangleTable, slot::UISlotTable,
-        switch::UISwitchTable, text::UITextTable,
+        switch::UISwitchTable, text::UITextTable, text_input::UITextInputTable,
     },
 };
 
@@ -27,6 +27,7 @@ pub enum UIElementTable {
     UISlotTable(UISlotTable),
     UITextTable(UITextTable),
     UIRectangleTable(UIRectangleTable),
+    UITextInputTable(UITextInputTable),
 }
 
 impl UIElementTable {
@@ -97,6 +98,11 @@ impl UIElementTable {
                 ),
                 index,
             )),
+            UIElementTable::UITextInputTable(table) => Some(UIRender::new(
+                self,
+                UIVisual::UITextInput(&table.config[index], &table.value[index]),
+                index,
+            )),
         }
     }
 
@@ -108,6 +114,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.visible,
             UIElementTable::UITextTable(table) => &table.visible,
             UIElementTable::UIRectangleTable(table) => &table.visible,
+            UIElementTable::UITextInputTable(table) => &table.visible,
         }
     }
 
@@ -127,6 +134,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.z_index,
             UIElementTable::UITextTable(table) => &table.z_index,
             UIElementTable::UIRectangleTable(table) => &table.z_index,
+            UIElementTable::UITextInputTable(table) => &table.z_index,
         }
     }
 
@@ -138,6 +146,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.position,
             UIElementTable::UIRectangleTable(table) => &table.position,
             UIElementTable::UITextTable(table) => &table.position,
+            UIElementTable::UITextInputTable(table) => &table.position,
         }
     }
 
@@ -149,6 +158,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &mut table.position,
             UIElementTable::UIRectangleTable(table) => &mut table.position,
             UIElementTable::UITextTable(table) => &mut table.position,
+            UIElementTable::UITextInputTable(table) => &mut table.position,
         }
     }
 
@@ -176,6 +186,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.global_pos,
             UIElementTable::UIRectangleTable(table) => &table.global_pos,
             UIElementTable::UITextTable(table) => &table.global_pos,
+            UIElementTable::UITextInputTable(table) => &table.global_pos,
         }
     }
 
@@ -187,6 +198,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &mut table.global_pos,
             UIElementTable::UIRectangleTable(table) => &mut table.global_pos,
             UIElementTable::UITextTable(table) => &mut table.global_pos,
+            UIElementTable::UITextInputTable(table) => &mut table.global_pos,
         }
     }
 
@@ -198,6 +210,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.position_type,
             UIElementTable::UITextTable(table) => &table.position_type,
             UIElementTable::UIRectangleTable(table) => &table.position_type,
+            UIElementTable::UITextInputTable(table) => &table.position_type,
         }
     }
 
@@ -209,6 +222,7 @@ impl UIElementTable {
             UIElementTable::UISlotTable(table) => &table.dimension,
             UIElementTable::UIRectangleTable(table) => &table.dimension,
             UIElementTable::UITextTable(table) => &table.dimension,
+            UIElementTable::UITextInputTable(table) => &table.dimension,
         }
     }
 
@@ -220,6 +234,7 @@ impl UIElementTable {
             UIElementTable::UIRectangleTable(table) => &mut table.dimension,
             UIElementTable::UISlotTable(table) => &mut table.dimension,
             UIElementTable::UITextTable(table) => &mut table.dimension,
+            UIElementTable::UITextInputTable(table) => &mut table.dimension,
         }
     }
 
@@ -231,6 +246,7 @@ impl UIElementTable {
             UIElementTable::UIRectangleTable(table) => &table.parent,
             UIElementTable::UITextTable(table) => &table.parent,
             UIElementTable::UISlotTable(table) => &table.parent,
+            UIElementTable::UITextInputTable(table) => &table.parent,
         }
     }
 
@@ -242,6 +258,7 @@ impl UIElementTable {
             UIElementTable::UIRectangleTable(table) => &table.ids,
             UIElementTable::UISlotTable(table) => &table.ids,
             UIElementTable::UITextTable(table) => &table.ids,
+            UIElementTable::UITextInputTable(table) => &table.ids,
         }
     }
 }
