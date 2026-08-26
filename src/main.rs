@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use macroquad::prelude::*;
-use remyan_client_ecs::{
+use remyanecs::{
     FontRegistry,
     page::{MainMenu, Page},
 };
