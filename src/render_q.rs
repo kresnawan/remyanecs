@@ -1,5 +1,7 @@
 use macroquad::{
-    input::{MouseButton, is_mouse_button_down}, text::draw_text_ex, time::draw_fps
+    input::{MouseButton, is_mouse_button_down},
+    text::draw_text_ex,
+    time::draw_fps,
 };
 
 use crate::{
@@ -32,7 +34,7 @@ pub struct UIRender<'a> {
 }
 
 impl<'a> UIRender<'a> {
-    pub fn new(table: &'a UIElementTable, vis: UIVisual<'a>, index: usize) -> UIRender<'a> {
+    pub fn new<T>(table: &'a UIElementTable<T>, vis: UIVisual<'a>, index: usize) -> UIRender<'a> {
         UIRender {
             element_id: table.id()[index],
             global_pos: &table.global_pos()[index],
@@ -63,13 +65,15 @@ pub enum UIVisual<'a> {
     UITextInput(&'a TextInputConfig, &'a String),
 }
 
-pub fn render(world: &World) {
+pub fn render<T>(world: &World<T>) {
     let mut render_queue: Vec<UIRender> = Vec::new();
     for table in world.ui_tables.iter() {
         for index in 0..table.id().len() {
             let render = table.render_data(index);
             if let Some(render) = render {
-                render_queue.push(render);
+                if table.visible()[index] {
+                    render_queue.push(render);
+                }
             }
         }
     }
@@ -102,6 +106,16 @@ pub fn render(world: &World) {
     }
 
     draw_fps();
-    draw_text_ex(&format!("{:?}", world.focused_entity), 10., 40., Default::default());
-    draw_text_ex(&format!("{:?}", world.hovered_entity), 10., 50., Default::default());
+    draw_text_ex(
+        &format!("{:?}", world.focused_entity),
+        10.,
+        40.,
+        Default::default(),
+    );
+    draw_text_ex(
+        &format!("{:?}", world.hovered_entity),
+        10.,
+        50.,
+        Default::default(),
+    );
 }

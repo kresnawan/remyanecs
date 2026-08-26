@@ -4,7 +4,6 @@ use macroquad::prelude::*;
 
 pub mod component;
 pub mod helper;
-pub mod page;
 pub mod render_q;
 pub mod system;
 pub mod table;
@@ -19,6 +18,16 @@ pub struct Gradient {
 
 pub struct FontRegistry {
     pub fonts: HashMap<FontKind, Font>,
+}
+
+impl FontRegistry {
+    pub fn new() -> FontRegistry {
+        FontRegistry { fonts: HashMap::new() }
+    }
+
+    pub fn get(&self, font: &FontKind) -> Option<&Font> {
+        self.fonts.get(font)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

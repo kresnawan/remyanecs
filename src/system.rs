@@ -1,9 +1,9 @@
+use std::fmt::Debug;
+
 use macroquad::{miniquad::window::screen_size, prelude::*};
 
 use crate::{
-    component::{
-        Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType, UIEvent,
-    },
+    component::{Dimension, Direction, Display, DynDim, DynPos, GlobalPosition, PositionType},
     helper::split_by_width,
     table::UIElementTable,
     ui::UIElement,
@@ -28,7 +28,25 @@ impl Default for PendingLayoutUpdate {
     }
 }
 
-pub fn system_dirty_state(world: &mut World) {
+pub fn system_visible<T>(world: &mut World<T>) {
+    for table_idx in 0..world.ui_tables.len() {
+        for element_idx in 0..world.ui_tables[table_idx].id().len() {
+            let mut is_visible = world.ui_tables[table_idx].visible()[element_idx];
+
+            if let Some(parent) = world.ui_tables[table_idx].parent()[element_idx] {
+                let parent_location = &world.ui_locations[parent];
+                let parent_visibility = world.ui_tables[parent_location.table.t_index()].visible()
+                    [parent_location.index];
+                is_visible = parent_visibility;
+            }
+
+            let table = &mut world.ui_tables[table_idx];
+            table.visible_mut()[element_idx] = is_visible;
+        }
+    }
+}
+
+pub fn system_dirty_state<T>(world: &mut World<T>) {
     let current_screen_size = screen_size();
 
     if current_screen_size != world.current_screen_size {
@@ -58,7 +76,7 @@ pub fn system_dirty_state(world: &mut World) {
     }
 }
 
-pub fn system_arrange_text(world: &mut World) {
+pub fn system_arrange_text<T>(world: &mut World<T>) {
     let mut update_queue: Vec<(usize, Vec<String>)> = Vec::new();
 
     let UIElementTable::UITextTable(table) = &world.ui_tables[UIElement::UIText.t_index()] else {
@@ -103,7 +121,7 @@ pub fn system_arrange_text(world: &mut World) {
     }
 }
 
-pub fn system_text_dimension(world: &mut World) {
+pub fn system_text_dimension<T>(world: &mut World<T>) {
     let UIElementTable::UITextTable(table) = &mut world.ui_tables[UIElement::UIText.t_index()]
     else {
         return;
@@ -136,7 +154,7 @@ pub fn system_text_dimension(world: &mut World) {
     }
 }
 
-pub fn system_parent_display(world: &mut World) {
+pub fn system_parent_display<T>(world: &mut World<T>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let mut pending_updates = PendingLayoutUpdate::default();
@@ -233,7 +251,7 @@ pub fn system_parent_display(world: &mut World) {
     }
 }
 
-pub fn system_dynamic_transform(world: &mut World) {
+pub fn system_dynamic_transform<T>(world: &mut World<T>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let table = &world.ui_tables[table_idx];
@@ -359,7 +377,7 @@ pub fn system_dynamic_transform(world: &mut World) {
     }
 }
 
-pub fn system_transform(world: &mut World) {
+pub fn system_transform<T>(world: &mut World<T>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let pending_update: (f32, f32);
@@ -397,7 +415,7 @@ pub fn system_transform(world: &mut World) {
     }
 }
 
-pub fn system_hover(world: &mut World) {
+pub fn system_hover<T>(world: &mut World<T>) {
     let (mx, my) = mouse_position();
     let mut highest_z: Option<u32> = None;
     let mut hovered_entity = None;
@@ -405,6 +423,10 @@ pub fn system_hover(world: &mut World) {
     for i in &world.hoverable_elements {
         let table = &world.ui_tables[i.t_index()];
         for (entity_idx, entity) in table.id().iter().enumerate() {
+            if !table.visible()[entity_idx] {
+                continue;
+            }
+
             let (pos, dim, z) = (
                 &table.global_pos()[entity_idx],
                 &table.dimension()[entity_idx],
@@ -434,7 +456,7 @@ pub fn system_hover(world: &mut World) {
     world.hovered_entity = hovered_entity;
 }
 
-pub fn system_on_click(world: &mut World) {
+pub fn system_on_click<T: Debug + Clone>(world: &mut World<T>, ui_event: &mut Vec<T>) {
     if is_mouse_button_released(MouseButton::Left) {
         if let Some(entity) = world.hovered_entity {
             let location = &world.ui_locations[entity];
@@ -451,35 +473,19 @@ pub fn system_on_click(world: &mut World) {
 
                 _ => {}
             }
+
+            if let Some(events) = table.on_click_event() {
+                if let Some(event) = &events[location.index] {
+                    ui_event.push(event.0.clone());
+                }
+            }
         } else {
             world.focused_entity = None;
         }
     }
 }
 
-pub fn system_on_click_event(world: &mut World, ui_events: &mut Vec<UIEvent>) {
-    for table_idx in 0..world.hoverable_elements.len() {
-        for element_idx in 0..world.ui_tables[table_idx].id().len() {
-            let table = &mut world.ui_tables[table_idx];
-
-            let is_hovered = if let Some(hovered_entity) = world.hovered_entity {
-                hovered_entity == table.id()[element_idx]
-            } else {
-                false
-            };
-
-            if is_mouse_button_released(MouseButton::Left) && is_hovered {
-                if let Some(on_click) = table.on_click_event() {
-                    if let Some(event) = &on_click[element_idx] {
-                        ui_events.push(event.0.clone());
-                    }
-                }
-            }
-        }
-    }
-}
-
-pub fn system_text_input(world: &mut World) {
+pub fn system_text_input<T>(world: &mut World<T>) {
     if let Some(entity) = world.focused_entity {
         let location = &world.ui_locations[entity];
         let table = &mut world.ui_tables[location.table.t_index()];
@@ -500,18 +506,6 @@ pub fn system_text_input(world: &mut World) {
             if is_key_pressed(KeyCode::Backspace) {
                 table.value[location.index].pop();
             }
-        }
-    }
-}
-
-pub fn system_handle_ui_events(_world: &mut World, ui_events: &mut Vec<UIEvent>) {
-    for event in ui_events.drain(..) {
-        match event {
-            UIEvent::CreateRoom => {
-                println!("Room created")
-            }
-
-            _ => {}
         }
     }
 }

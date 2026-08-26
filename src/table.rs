@@ -20,17 +20,17 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub enum UIElementTable {
-    UIButtonTable(UIButtonTable),
+pub enum UIElementTable<T> {
+    UIButtonTable(UIButtonTable<T>),
     UIDivTable(UIDivTable),
-    UISwitchTable(UISwitchTable),
+    UISwitchTable(UISwitchTable<T>),
     UISlotTable(UISlotTable),
     UITextTable(UITextTable),
     UIRectangleTable(UIRectangleTable),
     UITextInputTable(UITextInputTable),
 }
 
-impl UIElementTable {
+impl<T> UIElementTable<T> {
     pub fn as_text(&self) -> Option<&UITextTable> {
         if let UIElementTable::UITextTable(table) = self {
             Some(table)
@@ -118,7 +118,19 @@ impl UIElementTable {
         }
     }
 
-    pub fn on_click_event(&self) -> Option<&Vec<Option<OnClickEvent>>> {
+    pub fn visible_mut(&mut self) -> &mut Vec<bool> {
+        match self {
+            UIElementTable::UIDivTable(table) => &mut table.visible,
+            UIElementTable::UIButtonTable(table) => &mut table.visible,
+            UIElementTable::UISwitchTable(table) => &mut table.visible,
+            UIElementTable::UISlotTable(table) => &mut table.visible,
+            UIElementTable::UITextTable(table) => &mut table.visible,
+            UIElementTable::UIRectangleTable(table) => &mut table.visible,
+            UIElementTable::UITextInputTable(table) => &mut table.visible,
+        }
+    }
+
+    pub fn on_click_event(&self) -> Option<&Vec<Option<OnClickEvent<T>>>> {
         match self {
             UIElementTable::UIButtonTable(table) => Some(&table.on_click_event),
             UIElementTable::UISwitchTable(table) => Some(&table.on_click_event),

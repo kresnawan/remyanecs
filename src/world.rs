@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
+use macroquad::color::Color;
+
 use crate::{
     FontRegistry, UIElementId,
     component::{
-        Button, ButtonConfig, Dimension, Display, Div, GlobalPosition, OnClickEvent, Parent,
-        Position, PositionType, Style,
+        Button, ButtonConfig, Dimension, Display, Div, DynDim, GlobalPosition, OnClickEvent,
+        Parent, Position, PositionType, Style, UIColor,
     },
     table::{
         UIElementTable,
@@ -19,7 +21,7 @@ use crate::{
     ui::{UIElement, UILocation},
 };
 
-pub struct World {
+pub struct World<T> {
     pub next_id: UIElementId,
     pub next_z_index: u32,
 
@@ -34,11 +36,11 @@ pub struct World {
     pub is_updated: bool,
 
     pub ui_locations: Vec<UILocation>,
-    pub ui_tables: Vec<UIElementTable>,
+    pub ui_tables: Vec<UIElementTable<T>>,
 }
 
-impl World {
-    pub fn new(font_registry: Arc<FontRegistry>) -> World {
+impl<T> World<T> {
+    pub fn new(font_registry: Arc<FontRegistry>) -> World<T> {
         let ui_div_table = UIElementTable::UIDivTable(UIDivTable::new());
         let ui_button_table = UIElementTable::UIButtonTable(UIButtonTable::new());
         let ui_switch_table = UIElementTable::UISwitchTable(UISwitchTable::new());
@@ -66,6 +68,7 @@ impl World {
                 UIElement::UIButton,
                 UIElement::UISwitch,
                 UIElement::UITextInput,
+                UIElement::UIRectangle,
             ],
             font_registry,
             current_screen_size: (0., 0.),
@@ -92,7 +95,7 @@ impl World {
         dim: Dimension,
         config: ButtonConfig,
         parent: Option<Parent>,
-        on_click_event: Option<OnClickEvent>,
+        on_click_event: Option<OnClickEvent<T>>,
     ) -> UIElementId {
         let current_id = self.next_id.clone();
         let current_z = self.next_z_index.clone();
@@ -138,6 +141,7 @@ impl World {
         pos: (Position, PositionType),
         dim: Dimension,
         display: Display,
+        visible: bool,
         parent: Option<Parent>,
     ) -> UIElementId {
         let current_id = self.next_id;
@@ -157,7 +161,7 @@ impl World {
             table.position.push(pos.0);
             table.position_type.push(pos.1);
 
-            table.visible.push(true);
+            table.visible.push(visible);
             table.z_index.push(current_z);
 
             table.dimension.push(dim);
@@ -184,7 +188,7 @@ impl World {
         pos: (Position, PositionType),
         dim: Dimension,
         parent: Option<Parent>,
-        on_click_event: Option<OnClickEvent>,
+        on_click_event: Option<OnClickEvent<T>>,
         switch_config: SwitchConfig,
     ) -> UIElementId {
         let current_id = self.next_id.clone();
@@ -402,5 +406,54 @@ impl World {
         self.next_z_index += 1;
 
         return current_id;
+    }
+
+    pub fn spawn_dialogue_box(
+        &mut self,
+        dim: Dimension,
+        style: Style,
+    ) -> (UIElementId, UIElementId) {
+        let container = self.spawn_div(
+            (Position::center(), PositionType::Relative),
+            Dimension::new().dyn_h(DynDim::Full).dyn_w(DynDim::Full),
+            Display::Normal,
+            false,
+            None,
+        );
+
+        self.spawn_rectangle(
+            (Position::center(), PositionType::Relative),
+            Dimension::new().dyn_h(DynDim::Full).dyn_w(DynDim::Full),
+            Style {
+                bg_color: UIColor::Fill(Color::from_rgba(0, 0, 0, 127)),
+                ..Default::default()
+            },
+            Some(container),
+        );
+
+        let inner_container = self.spawn_div(
+            (Position::center(), PositionType::Relative),
+            dim,
+            Display::Normal,
+            true,
+            Some(container),
+        );
+
+        self.spawn_rectangle(
+            (Position::center(), PositionType::Relative),
+            Dimension::new().dyn_h(DynDim::Full).dyn_w(DynDim::Full),
+            style,
+            Some(inner_container),
+        );
+
+        (container, inner_container)
+    }
+
+    pub fn set_button_event(&mut self, entity: UIElementId, event: T) {
+        let location = &self.ui_locations[entity];
+        if let UIElementTable::UIButtonTable(table) = &mut self.ui_tables[location.table.t_index()]
+        {
+            table.on_click_event[location.index] = Some(OnClickEvent(event));
+        }
     }
 }

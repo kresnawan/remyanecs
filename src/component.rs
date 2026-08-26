@@ -245,7 +245,7 @@ impl Default for Style {
 pub type ZIndex = u32;
 
 #[derive(Debug)]
-pub struct OnClickEvent(pub UIEvent);
+pub struct OnClickEvent<T>(pub T);
 
 pub struct Visible;
 

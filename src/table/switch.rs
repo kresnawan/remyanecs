@@ -18,7 +18,7 @@ pub struct SwitchConfig {
 }
 
 #[derive(Debug)]
-pub struct UISwitchTable {
+pub struct UISwitchTable<T> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -27,15 +27,15 @@ pub struct UISwitchTable {
     pub dimension: Vec<Dimension>,
     pub parent: Vec<Option<Parent>>,
 
-    pub on_click_event: Vec<Option<OnClickEvent>>,
+    pub on_click_event: Vec<Option<OnClickEvent<T>>>,
     pub disabled: Vec<bool>,
     pub visible: Vec<bool>,
     pub switch_config: Vec<SwitchConfig>,
     pub is_on: Vec<bool>,
 }
 
-impl UISwitchTable {
-    pub fn new() -> UISwitchTable {
+impl<T> UISwitchTable<T> {
+    pub fn new() -> UISwitchTable<T> {
         UISwitchTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -112,13 +112,13 @@ pub fn render_switch(render_data: &UIRender) {
     );
 }
 
-pub fn spawn_std_switch(
-    world: &mut World,
+pub fn spawn_std_switch<T>(
+    world: &mut World<T>,
     pos: Position,
     dim: Dimension,
     pos_type: PositionType,
     parent: Option<UIElementId>,
-    on_click: Option<OnClickEvent>,
+    on_click: Option<OnClickEvent<T>>,
 ) -> UIElementId {
     world.spawn_switch(
         (pos, pos_type),
