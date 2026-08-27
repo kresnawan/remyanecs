@@ -46,6 +46,27 @@ pub fn system_visible<T>(world: &mut World<T>) {
     }
 }
 
+pub fn system_dialogue_visibility<T>(world: &mut World<T>) {
+    for element_idx in 0..world.ui_tables[UIElement::UIDiv.t_index()].id().len() {
+        let table = &mut world.ui_tables[UIElement::UIDiv.t_index()];
+
+        let UIElementTable::UIDivTable(table) = table else {
+            continue;
+        };
+
+        if !table.dialogue[element_idx] {
+            continue;
+        }
+
+        if let Some(opened_dialogue) = world.opened_dialogue {
+            let is_opened = opened_dialogue == table.ids[element_idx];
+            table.visible[element_idx] = is_opened;
+        } else {
+            table.visible[element_idx] = false;
+        }
+    }
+}
+
 pub fn system_dirty_state<T>(world: &mut World<T>) {
     let current_screen_size = screen_size();
 
@@ -464,14 +485,17 @@ pub fn system_on_click<T: Debug + Clone>(world: &mut World<T>, ui_event: &mut Ve
 
             match table {
                 UIElementTable::UISwitchTable(table) => {
-                    table.is_on[location.index] = !table.is_on[location.index]
+                    table.is_on[location.index] = !table.is_on[location.index];
+                    world.focused_entity = None;
                 }
 
                 UIElementTable::UITextInputTable(_) => {
                     world.focused_entity = Some(entity);
                 }
 
-                _ => {}
+                _ => {
+                    world.focused_entity = None;
+                }
             }
 
             if let Some(events) = table.on_click_event() {

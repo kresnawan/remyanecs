@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::sync::Arc;
 
 use macroquad::color::Color;
@@ -8,6 +9,7 @@ use crate::{
         Button, ButtonConfig, Dimension, Display, Div, DynDim, GlobalPosition, OnClickEvent,
         Parent, Position, PositionType, Style, UIColor,
     },
+    render_q::render,
     table::{
         UIElementTable,
         button::UIButtonTable,
@@ -21,6 +23,12 @@ use crate::{
     ui::{UIElement, UILocation},
 };
 
+use crate::system::{
+    system_arrange_text, system_dialogue_visibility, system_dirty_state, system_dynamic_transform,
+    system_hover, system_on_click, system_parent_display, system_text_dimension, system_text_input,
+    system_transform, system_visible,
+};
+
 pub struct World<T> {
     pub next_id: UIElementId,
     pub next_z_index: u32,
@@ -29,8 +37,10 @@ pub struct World<T> {
 
     pub hovered_entity: Option<UIElementId>,
     pub focused_entity: Option<UIElementId>,
+    pub opened_dialogue: Option<UIElementId>,
 
     pub font_registry: Arc<FontRegistry>,
+    pub initialized: bool,
 
     pub current_screen_size: (f32, f32),
     pub is_updated: bool,
@@ -71,13 +81,28 @@ impl<T> World<T> {
                 UIElement::UIRectangle,
             ],
             font_registry,
+            initialized: false,
             current_screen_size: (0., 0.),
             is_updated: false,
             hovered_entity: None,
             focused_entity: None,
+            opened_dialogue: None,
             ui_locations: Vec::new(),
             ui_tables,
         }
+    }
+
+    pub fn open_dialogue(&mut self, entity: UIElementId) {
+        let location = &self.ui_locations[entity];
+        if let UIElementTable::UIDivTable(table) = &self.ui_tables[location.table.t_index()] {
+            if table.dialogue[location.index] {
+                self.opened_dialogue = Some(entity);
+            }
+        }
+    }
+
+    pub fn close_dialogue(&mut self) {
+        self.opened_dialogue = None;
     }
 
     fn add_parent_child(&mut self, ui_id: UIElementId, parent_id: UIElementId) {
@@ -136,6 +161,42 @@ impl<T> World<T> {
         return current_id;
     }
 
+    fn spawn_dialogue_div(&mut self) -> UIElementId {
+        let current_id = self.next_id;
+        let current_z = self.next_z_index;
+
+        if let UIElementTable::UIDivTable(table) = &mut self.ui_tables[UIElement::UIDiv.t_index()] {
+            self.ui_locations.push(UILocation {
+                table: UIElement::UIDiv,
+                index: table.ids.len(),
+            });
+
+            table.ids.push(current_id);
+            table.global_pos.push(GlobalPosition { x: 0., y: 0. });
+            table.position.push(Position::center());
+            table.position_type.push(PositionType::Relative);
+
+            table.visible.push(false);
+            table.z_index.push(current_z);
+
+            table
+                .dimension
+                .push(Dimension::new().dyn_h(DynDim::Full).dyn_w(DynDim::Full));
+            table.parent.push(None);
+
+            table.div.push(Div);
+            table.display.push(Display::Normal);
+            table.childs.push(Vec::new());
+            table.is_dirty.push(true);
+            table.dialogue.push(true);
+        }
+
+        self.next_id += 1;
+        self.next_z_index += 1;
+
+        return current_id;
+    }
+
     pub fn spawn_div(
         &mut self,
         pos: (Position, PositionType),
@@ -171,6 +232,7 @@ impl<T> World<T> {
             table.display.push(display);
             table.childs.push(Vec::new());
             table.is_dirty.push(true);
+            table.dialogue.push(false);
         }
 
         if let Some(parent) = parent {
@@ -413,13 +475,7 @@ impl<T> World<T> {
         dim: Dimension,
         style: Style,
     ) -> (UIElementId, UIElementId) {
-        let container = self.spawn_div(
-            (Position::center(), PositionType::Relative),
-            Dimension::new().dyn_h(DynDim::Full).dyn_w(DynDim::Full),
-            Display::Normal,
-            false,
-            None,
-        );
+        let container = self.spawn_dialogue_div();
 
         self.spawn_rectangle(
             (Position::center(), PositionType::Relative),
@@ -455,5 +511,38 @@ impl<T> World<T> {
         {
             table.on_click_event[location.index] = Some(OnClickEvent(event));
         }
+    }
+}
+
+impl<T: Debug + Clone> World<T> {
+    pub fn update(&mut self, ui_events: &mut Vec<T>) {
+        if !self.initialized {
+            //
+            // Any task on init goes here
+
+            self.initialized = true;
+        }
+
+        system_visible(self);
+        system_dialogue_visibility(self);
+
+        system_dirty_state(self);
+
+        system_arrange_text(self);
+        system_text_dimension(self);
+
+        system_dynamic_transform(self);
+        system_parent_display(self);
+        system_transform(self);
+
+        system_hover(self);
+
+        system_on_click(self, ui_events);
+
+        system_text_input(self);
+    }
+
+    pub fn render(&self) {
+        render(self);
     }
 }

@@ -27,7 +27,7 @@ pub struct UIButtonTable<T> {
     pub button_config: Vec<ButtonConfig>,
     pub button: Vec<Button>,
 
-    pub is_dirty: Vec<bool>
+    pub is_dirty: Vec<bool>,
 }
 
 impl<T> UIButtonTable<T> {
@@ -46,7 +46,7 @@ impl<T> UIButtonTable<T> {
             button_config: Vec::new(),
             button: Vec::new(),
 
-            is_dirty: Vec::new()
+            is_dirty: Vec::new(),
         }
     }
 }

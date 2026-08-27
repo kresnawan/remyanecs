@@ -17,7 +17,8 @@ pub struct UIDivTable {
     pub div: Vec<Div>,
     pub display: Vec<Display>,
     pub childs: Vec<Vec<usize>>,
-    pub is_dirty: Vec<bool>
+    pub is_dirty: Vec<bool>,
+    pub dialogue: Vec<bool>,
 }
 
 impl UIDivTable {
@@ -34,7 +35,8 @@ impl UIDivTable {
             div: Vec::new(),
             display: Vec::new(),
             childs: Vec::new(),
-            is_dirty: Vec::new()
+            is_dirty: Vec::new(),
+            dialogue: Vec::new()
         }
     }
 }
