@@ -12,7 +12,7 @@ use crate::{
 use macroquad::prelude::*;
 
 #[derive(Debug)]
-pub struct UIButtonTable<T> {
+pub struct UIButtonTable<T, U> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -24,14 +24,14 @@ pub struct UIButtonTable<T> {
     pub on_click_event: Vec<Option<OnClickEvent<T>>>,
     pub disabled: Vec<bool>,
     pub visible: Vec<bool>,
-    pub button_config: Vec<ButtonConfig>,
+    pub button_config: Vec<ButtonConfig<U>>,
     pub button: Vec<Button>,
 
     pub is_dirty: Vec<bool>,
 }
 
-impl<T> UIButtonTable<T> {
-    pub fn new() -> UIButtonTable<T> {
+impl<T, U> UIButtonTable<T, U> {
+    pub fn new() -> UIButtonTable<T, U> {
         UIButtonTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -51,7 +51,7 @@ impl<T> UIButtonTable<T> {
     }
 }
 
-pub fn render_button(render_data: &UIRender) {
+pub fn render_button<U>(render_data: &UIRender<U>) {
     if !render_data.visible {
         return;
     }
@@ -115,15 +115,18 @@ pub fn render_button(render_data: &UIRender) {
     );
 }
 
-pub fn spawn_std_button<T>(
-    world: &mut World<T>,
+pub fn spawn_std_button<T, U>(
+    world: &mut World<T, U>,
     pos: Position,
     dim: Dimension,
     pos_type: PositionType,
     text: &str,
     parent: Option<Parent>,
     on_click: Option<OnClickEvent<T>>,
-) -> UIElementId {
+) -> UIElementId
+where
+    U: Default,
+{
     world.spawn_button(
         (pos, pos_type),
         dim,

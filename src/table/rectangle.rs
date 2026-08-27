@@ -10,7 +10,7 @@ use crate::{
 use macroquad::prelude::*;
 
 #[derive(Debug)]
-pub struct UIRectangleTable {
+pub struct UIRectangleTable<U> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -20,11 +20,11 @@ pub struct UIRectangleTable {
     pub parent: Vec<Option<Parent>>,
 
     pub visible: Vec<bool>,
-    pub style: Vec<Style>,
+    pub style: Vec<Style<U>>,
 }
 
-impl UIRectangleTable {
-    pub fn new() -> UIRectangleTable {
+impl<U> UIRectangleTable<U> {
+    pub fn new() -> UIRectangleTable<U> {
         UIRectangleTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -39,7 +39,7 @@ impl UIRectangleTable {
     }
 }
 
-pub fn render_rectangle(render_data: &UIRender) {
+pub fn render_rectangle<U>(render_data: &UIRender<U>) {
     let UIVisual::UIRectangle(style) = render_data.vis else {
         return;
     };

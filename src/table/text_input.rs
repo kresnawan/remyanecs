@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 use crate::{
     FontRegistry, UIElementId,
@@ -10,14 +10,14 @@ use crate::{
 use macroquad::prelude::*;
 
 #[derive(Debug)]
-pub struct TextInputConfig {
-    pub on_focus_style: Style,
-    pub style: Style,
-    pub on_hover_style: Option<Style>,
+pub struct TextInputConfig<U> {
+    pub on_focus_style: Style<U>,
+    pub style: Style<U>,
+    pub on_hover_style: Option<Style<U>>,
 }
 
 #[derive(Debug)]
-pub struct UITextInputTable {
+pub struct UITextInputTable<U> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -28,14 +28,14 @@ pub struct UITextInputTable {
 
     pub visible: Vec<bool>,
     pub max_length: Vec<Option<usize>>,
-    pub config: Vec<TextInputConfig>,
+    pub config: Vec<TextInputConfig<U>>,
     pub value: Vec<String>,
 
     pub is_dirty: Vec<bool>,
 }
 
-impl UITextInputTable {
-    pub fn new() -> UITextInputTable {
+impl<U> UITextInputTable<U> {
+    pub fn new() -> UITextInputTable<U> {
         UITextInputTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -53,7 +53,10 @@ impl UITextInputTable {
     }
 }
 
-pub fn render_text_input(render_data: &UIRender, font: Arc<FontRegistry>) {
+pub fn render_text_input<U>(render_data: &UIRender<U>, font: Arc<FontRegistry<U>>)
+where
+    U: Eq + Hash,
+{
     if let UIVisual::UITextInput(a, b) = render_data.vis {
         let used_style = if render_data.is_focused {
             &a.on_focus_style

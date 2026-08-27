@@ -28,7 +28,7 @@ impl Default for PendingLayoutUpdate {
     }
 }
 
-pub fn system_visible<T>(world: &mut World<T>) {
+pub fn system_visible<T, U>(world: &mut World<T, U>) {
     for table_idx in 0..world.ui_tables.len() {
         for element_idx in 0..world.ui_tables[table_idx].id().len() {
             let mut is_visible = world.ui_tables[table_idx].visible()[element_idx];
@@ -46,7 +46,7 @@ pub fn system_visible<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_dialogue_visibility<T>(world: &mut World<T>) {
+pub fn system_dialogue_visibility<T, U>(world: &mut World<T, U>) {
     for element_idx in 0..world.ui_tables[UIElement::UIDiv.t_index()].id().len() {
         let table = &mut world.ui_tables[UIElement::UIDiv.t_index()];
 
@@ -67,7 +67,7 @@ pub fn system_dialogue_visibility<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_dirty_state<T>(world: &mut World<T>) {
+pub fn system_dirty_state<T, U>(world: &mut World<T, U>) {
     let current_screen_size = screen_size();
 
     if current_screen_size != world.current_screen_size {
@@ -97,7 +97,7 @@ pub fn system_dirty_state<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_arrange_text<T>(world: &mut World<T>) {
+pub fn system_arrange_text<T, U>(world: &mut World<T, U>) {
     let mut update_queue: Vec<(usize, Vec<String>)> = Vec::new();
 
     let UIElementTable::UITextTable(table) = &world.ui_tables[UIElement::UIText.t_index()] else {
@@ -142,7 +142,7 @@ pub fn system_arrange_text<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_text_dimension<T>(world: &mut World<T>) {
+pub fn system_text_dimension<T, U>(world: &mut World<T, U>) {
     let UIElementTable::UITextTable(table) = &mut world.ui_tables[UIElement::UIText.t_index()]
     else {
         return;
@@ -175,7 +175,7 @@ pub fn system_text_dimension<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_parent_display<T>(world: &mut World<T>) {
+pub fn system_parent_display<T, U>(world: &mut World<T, U>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let mut pending_updates = PendingLayoutUpdate::default();
@@ -272,7 +272,7 @@ pub fn system_parent_display<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_dynamic_transform<T>(world: &mut World<T>) {
+pub fn system_dynamic_transform<T, U>(world: &mut World<T, U>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let table = &world.ui_tables[table_idx];
@@ -398,7 +398,7 @@ pub fn system_dynamic_transform<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_transform<T>(world: &mut World<T>) {
+pub fn system_transform<T, U>(world: &mut World<T, U>) {
     for table_idx in 0..world.ui_tables.len() {
         for index in 0..world.ui_tables[table_idx].id().len() {
             let pending_update: (f32, f32);
@@ -436,7 +436,7 @@ pub fn system_transform<T>(world: &mut World<T>) {
     }
 }
 
-pub fn system_hover<T>(world: &mut World<T>) {
+pub fn system_hover<T, U>(world: &mut World<T, U>) {
     let (mx, my) = mouse_position();
     let mut highest_z: Option<u32> = None;
     let mut hovered_entity = None;
@@ -477,7 +477,7 @@ pub fn system_hover<T>(world: &mut World<T>) {
     world.hovered_entity = hovered_entity;
 }
 
-pub fn system_on_click<T: Debug + Clone>(world: &mut World<T>, ui_event: &mut Vec<T>) {
+pub fn system_on_click<T: Debug + Clone, U>(world: &mut World<T, U>, ui_event: &mut Vec<T>) {
     if is_mouse_button_released(MouseButton::Left) {
         if let Some(entity) = world.hovered_entity {
             let location = &world.ui_locations[entity];
@@ -509,7 +509,7 @@ pub fn system_on_click<T: Debug + Clone>(world: &mut World<T>, ui_event: &mut Ve
     }
 }
 
-pub fn system_text_input<T>(world: &mut World<T>) {
+pub fn system_text_input<T, U>(world: &mut World<T, U>) {
     if let Some(entity) = world.focused_entity {
         let location = &world.ui_locations[entity];
         let table = &mut world.ui_tables[location.table.t_index()];

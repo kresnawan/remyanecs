@@ -12,13 +12,13 @@ use crate::{
 use macroquad::prelude::*;
 
 #[derive(Debug)]
-pub struct SwitchConfig {
-    style: Style,
-    hover_style: Option<Style>,
+pub struct SwitchConfig<U> {
+    style: Style<U>,
+    hover_style: Option<Style<U>>,
 }
 
 #[derive(Debug)]
-pub struct UISwitchTable<T> {
+pub struct UISwitchTable<T, U> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -30,12 +30,12 @@ pub struct UISwitchTable<T> {
     pub on_click_event: Vec<Option<OnClickEvent<T>>>,
     pub disabled: Vec<bool>,
     pub visible: Vec<bool>,
-    pub switch_config: Vec<SwitchConfig>,
+    pub switch_config: Vec<SwitchConfig<U>>,
     pub is_on: Vec<bool>,
 }
 
-impl<T> UISwitchTable<T> {
-    pub fn new() -> UISwitchTable<T> {
+impl<T, U> UISwitchTable<T, U> {
+    pub fn new() -> UISwitchTable<T, U> {
         UISwitchTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -53,7 +53,7 @@ impl<T> UISwitchTable<T> {
     }
 }
 
-pub fn render_switch(render_data: &UIRender) {
+pub fn render_switch<U>(render_data: &UIRender<U>) {
     let UIVisual::UISwitch(config) = render_data.vis else {
         return;
     };
@@ -112,14 +112,17 @@ pub fn render_switch(render_data: &UIRender) {
     );
 }
 
-pub fn spawn_std_switch<T>(
-    world: &mut World<T>,
+pub fn spawn_std_switch<T, U>(
+    world: &mut World<T, U>,
     pos: Position,
     dim: Dimension,
     pos_type: PositionType,
     parent: Option<UIElementId>,
     on_click: Option<OnClickEvent<T>>,
-) -> UIElementId {
+) -> UIElementId
+where
+    U: Default,
+{
     world.spawn_switch(
         (pos, pos_type),
         dim,

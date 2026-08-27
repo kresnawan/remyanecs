@@ -1,9 +1,12 @@
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 use crate::{
-    FontRegistry, UIElementId, component::{
+    FontRegistry, UIElementId,
+    component::{
         Dimension, GlobalPosition, Parent, Position, PositionType, Style, UIColor, ZIndex,
-    }, helper::draw_text_extended, render_q::{UIRender, UIVisual}
+    },
+    helper::draw_text_extended,
+    render_q::{UIRender, UIVisual},
 };
 
 use macroquad::prelude::*;
@@ -15,7 +18,7 @@ pub enum TextAlignment {
 }
 
 #[derive(Debug)]
-pub struct UITextTable {
+pub struct UITextTable<U> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -26,15 +29,15 @@ pub struct UITextTable {
 
     pub visible: Vec<bool>,
     pub max_width: Vec<Option<f32>>,
-    pub style: Vec<Style>,
+    pub style: Vec<Style<U>>,
     pub value: Vec<String>,
     pub lines: Vec<Vec<String>>,
 
     pub is_dirty: Vec<bool>,
 }
 
-impl UITextTable {
-    pub fn new() -> UITextTable {
+impl<U> UITextTable<U> {
+    pub fn new() -> UITextTable<U> {
         UITextTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -53,7 +56,10 @@ impl UITextTable {
     }
 }
 
-pub fn render_text(render_data: &UIRender, font: Arc<FontRegistry>) {
+pub fn render_text<U>(render_data: &UIRender<U>, font: Arc<FontRegistry<U>>)
+where
+    U: Eq + Hash,
+{
     let UIVisual::UIText(config, max_width, text) = render_data.vis else {
         return;
     };

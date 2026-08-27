@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use macroquad::{
     input::{MouseButton, is_mouse_button_down},
     text::draw_text_ex,
@@ -19,7 +21,7 @@ use crate::{
     world::World,
 };
 
-pub struct UIRender<'a> {
+pub struct UIRender<'a, U> {
     pub element_id: UIElementId,
     pub global_pos: &'a GlobalPosition,
     pub dim: &'a Dimension,
@@ -30,11 +32,15 @@ pub struct UIRender<'a> {
     pub is_disabled: bool,
     pub is_on: bool,
     pub visible: bool,
-    pub vis: UIVisual<'a>,
+    pub vis: UIVisual<'a, U>,
 }
 
-impl<'a> UIRender<'a> {
-    pub fn new<T>(table: &'a UIElementTable<T>, vis: UIVisual<'a>, index: usize) -> UIRender<'a> {
+impl<'a, U> UIRender<'a, U> {
+    pub fn new<T>(
+        table: &'a UIElementTable<T, U>,
+        vis: UIVisual<'a, U>,
+        index: usize,
+    ) -> UIRender<'a, U> {
         UIRender {
             element_id: table.id()[index],
             global_pos: &table.global_pos()[index],
@@ -50,23 +56,26 @@ impl<'a> UIRender<'a> {
         }
     }
 
-    pub fn is_on(mut self, value: bool) -> UIRender<'a> {
+    pub fn is_on(mut self, value: bool) -> UIRender<'a, U> {
         self.is_on = value;
         self
     }
 }
 
-pub enum UIVisual<'a> {
-    UIButton(&'a ButtonConfig),
-    UISwitch(&'a SwitchConfig),
+pub enum UIVisual<'a, U> {
+    UIButton(&'a ButtonConfig<U>),
+    UISwitch(&'a SwitchConfig<U>),
     UISlot(&'a SlotState),
-    UIRectangle(&'a Style),
-    UIText(&'a Style, Option<f32>, &'a Vec<String>),
-    UITextInput(&'a TextInputConfig, &'a String),
+    UIRectangle(&'a Style<U>),
+    UIText(&'a Style<U>, Option<f32>, &'a Vec<String>),
+    UITextInput(&'a TextInputConfig<U>, &'a String),
 }
 
-pub fn render<T>(world: &World<T>) {
-    let mut render_queue: Vec<UIRender> = Vec::new();
+pub fn render<T, U>(world: &World<T, U>)
+where
+    U: Eq + Hash
+{
+    let mut render_queue: Vec<UIRender<U>> = Vec::new();
     for table in world.ui_tables.iter() {
         for index in 0..table.id().len() {
             let render = table.render_data(index);
@@ -116,6 +125,12 @@ pub fn render<T>(world: &World<T>) {
         &format!("{:?}", world.hovered_entity),
         10.,
         50.,
+        Default::default(),
+    );
+    draw_text_ex(
+        &format!("{:?}", world.opened_dialogue),
+        10.,
+        60.,
         Default::default(),
     );
 }

@@ -14,7 +14,10 @@ pub struct SlotState {
 
 #[derive(Debug)]
 pub enum SlotIndex {
-    One, Two, Three, Four
+    One,
+    Two,
+    Three,
+    Four,
 }
 
 impl SlotIndex {
@@ -40,7 +43,7 @@ pub struct UISlotTable {
     pub visible: Vec<bool>,
 
     pub state: Vec<SlotState>,
-    pub index: Vec<SlotIndex>
+    pub index: Vec<SlotIndex>,
 }
 
 impl UISlotTable {
@@ -55,12 +58,12 @@ impl UISlotTable {
             parent: Vec::new(),
             state: Vec::new(),
             visible: Vec::new(),
-            index: Vec::new()
+            index: Vec::new(),
         }
     }
 }
 
-pub fn render_slot(render_data: &UIRender) {
+pub fn render_slot<U>(render_data: &UIRender<'_, U>) {
     let UIVisual::UISlot(config) = render_data.vis else {
         return;
     };

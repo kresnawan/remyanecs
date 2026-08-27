@@ -1,12 +1,12 @@
 use macroquad::prelude::*;
 
-use crate::{FontKind, Gradient, UIElementId};
+use crate::{Gradient, UIElementId};
 
 #[derive(Debug)]
-pub struct ButtonConfig {
+pub struct ButtonConfig<U> {
     pub text: String,
-    pub style: Style,
-    pub hover_style: Option<Style>,
+    pub style: Style<U>,
+    pub hover_style: Option<Style<U>>,
 }
 
 #[derive(Clone, Debug)]
@@ -192,10 +192,10 @@ pub enum UIEvent {
 }
 
 #[derive(Clone, Debug)]
-pub struct Style {
+pub struct Style<U> {
     pub bg_color: UIColor,
     pub color: UIColor,
-    pub font: FontKind,
+    pub font: U,
     pub font_size: u16,
     pub line_spacing: f32,
     pub outline: f32,
@@ -203,17 +203,17 @@ pub struct Style {
     pub corner_radius: f32,
 }
 
-impl Style {
+impl<U> Style<U> {
     pub fn new(
         bg_color: UIColor,
         color: UIColor,
-        font: FontKind,
+        font: U,
         font_size: u16,
         outline: f32,
         outline_color: Color,
         corner_radius: f32,
-        line_spacing: f32
-    ) -> Style {
+        line_spacing: f32,
+    ) -> Style<U> {
         Style {
             bg_color,
             color,
@@ -222,22 +222,25 @@ impl Style {
             outline,
             outline_color,
             corner_radius,
-            line_spacing
+            line_spacing,
         }
     }
 }
 
-impl Default for Style {
+impl<U> Default for Style<U>
+where
+    U: Default,
+{
     fn default() -> Self {
         Self {
             bg_color: UIColor::Fill(WHITE),
             color: UIColor::Fill(BLACK),
-            font: FontKind::NunitoRegular,
+            font: U::default(),
             font_size: 24,
             outline: 0.,
             outline_color: BLACK,
             corner_radius: 0.,
-            line_spacing: 0.
+            line_spacing: 0.,
         }
     }
 }

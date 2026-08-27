@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use macroquad::prelude::*;
 
 pub mod component;
 pub mod helper;
 pub mod render_q;
-pub mod system;
+mod system;
 pub mod table;
 pub mod ui;
 pub mod world;
@@ -16,25 +16,23 @@ pub struct Gradient {
     pub angle: f32,
 }
 
-pub struct FontRegistry {
-    pub fonts: HashMap<FontKind, Font>,
+pub struct FontRegistry<U> {
+    pub fonts: HashMap<U, Font>,
 }
 
-impl FontRegistry {
-    pub fn new() -> FontRegistry {
-        FontRegistry { fonts: HashMap::new() }
+impl<U> FontRegistry<U>
+where
+    U: Eq + Hash,
+{
+    pub fn new() -> FontRegistry<U> {
+        FontRegistry {
+            fonts: HashMap::new(),
+        }
     }
 
-    pub fn get(&self, font: &FontKind) -> Option<&Font> {
+    pub fn get(&self, font: &U) -> Option<&Font> {
         self.fonts.get(font)
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum FontKind {
-    NunitoBlack,
-    NunitoBold,
-    NunitoRegular,
 }
 
 pub type UIElementId = usize;

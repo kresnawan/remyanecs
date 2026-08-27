@@ -20,18 +20,18 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub enum UIElementTable<T> {
-    UIButtonTable(UIButtonTable<T>),
+pub enum UIElementTable<T, U> {
+    UIButtonTable(UIButtonTable<T, U>),
     UIDivTable(UIDivTable),
-    UISwitchTable(UISwitchTable<T>),
+    UISwitchTable(UISwitchTable<T, U>),
     UISlotTable(UISlotTable),
-    UITextTable(UITextTable),
-    UIRectangleTable(UIRectangleTable),
-    UITextInputTable(UITextInputTable),
+    UITextTable(UITextTable<U>),
+    UIRectangleTable(UIRectangleTable<U>),
+    UITextInputTable(UITextInputTable<U>),
 }
 
-impl<T> UIElementTable<T> {
-    pub fn as_text(&self) -> Option<&UITextTable> {
+impl<T, U> UIElementTable<T, U> {
+    pub fn as_text(&self) -> Option<&UITextTable<U>> {
         if let UIElementTable::UITextTable(table) = self {
             Some(table)
         } else {
@@ -59,7 +59,7 @@ impl<T> UIElementTable<T> {
         }
     }
 
-    pub fn as_text_mut(&mut self) -> Option<&mut UITextTable> {
+    pub fn as_text_mut(&mut self) -> Option<&mut UITextTable<U>> {
         if let UIElementTable::UITextTable(table) = self {
             Some(table)
         } else {
@@ -67,7 +67,7 @@ impl<T> UIElementTable<T> {
         }
     }
 
-    pub fn render_data(&self, index: usize) -> Option<UIRender<'_>> {
+    pub fn render_data(&self, index: usize) -> Option<UIRender<'_, U>> {
         match self {
             UIElementTable::UIButtonTable(table) => Some(UIRender::new(
                 self,

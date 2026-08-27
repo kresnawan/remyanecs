@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, hash::Hash};
 use std::sync::Arc;
 
 use macroquad::color::Color;
@@ -29,7 +29,7 @@ use crate::system::{
     system_transform, system_visible,
 };
 
-pub struct World<T> {
+pub struct World<T, U> {
     pub next_id: UIElementId,
     pub next_z_index: u32,
 
@@ -39,18 +39,21 @@ pub struct World<T> {
     pub focused_entity: Option<UIElementId>,
     pub opened_dialogue: Option<UIElementId>,
 
-    pub font_registry: Arc<FontRegistry>,
+    pub font_registry: Arc<FontRegistry<U>>,
     pub initialized: bool,
 
     pub current_screen_size: (f32, f32),
     pub is_updated: bool,
 
     pub ui_locations: Vec<UILocation>,
-    pub ui_tables: Vec<UIElementTable<T>>,
+    pub ui_tables: Vec<UIElementTable<T, U>>,
 }
 
-impl<T> World<T> {
-    pub fn new(font_registry: Arc<FontRegistry>) -> World<T> {
+impl<T, U> World<T, U>
+where
+    U: Default,
+{
+    pub fn new(font_registry: Arc<FontRegistry<U>>) -> World<T, U> {
         let ui_div_table = UIElementTable::UIDivTable(UIDivTable::new());
         let ui_button_table = UIElementTable::UIButtonTable(UIButtonTable::new());
         let ui_switch_table = UIElementTable::UISwitchTable(UISwitchTable::new());
@@ -118,7 +121,7 @@ impl<T> World<T> {
         &mut self,
         pos: (Position, PositionType),
         dim: Dimension,
-        config: ButtonConfig,
+        config: ButtonConfig<U>,
         parent: Option<Parent>,
         on_click_event: Option<OnClickEvent<T>>,
     ) -> UIElementId {
@@ -251,7 +254,7 @@ impl<T> World<T> {
         dim: Dimension,
         parent: Option<Parent>,
         on_click_event: Option<OnClickEvent<T>>,
-        switch_config: SwitchConfig,
+        switch_config: SwitchConfig<U>,
     ) -> UIElementId {
         let current_id = self.next_id.clone();
         let current_z = self.next_z_index.clone();
@@ -298,7 +301,7 @@ impl<T> World<T> {
         &mut self,
         position: (Position, PositionType),
         value: &str,
-        style: Style,
+        style: Style<U>,
         max_width: Option<f32>,
         parent: Option<Parent>,
     ) -> UIElementId {
@@ -344,7 +347,7 @@ impl<T> World<T> {
         &mut self,
         pos: (Position, PositionType),
         dim: Dimension,
-        style: Style,
+        style: Style<U>,
         parent: Option<Parent>,
     ) -> UIElementId {
         let current_id = self.next_id.clone();
@@ -428,7 +431,7 @@ impl<T> World<T> {
         &mut self,
         pos: (Position, PositionType),
         dim: Dimension,
-        config: TextInputConfig,
+        config: TextInputConfig<U>,
         max_length: Option<usize>,
         parent: Option<UIElementId>,
     ) -> UIElementId {
@@ -473,7 +476,7 @@ impl<T> World<T> {
     pub fn spawn_dialogue_box(
         &mut self,
         dim: Dimension,
-        style: Style,
+        style: Style<U>,
     ) -> (UIElementId, UIElementId) {
         let container = self.spawn_dialogue_div();
 
@@ -514,7 +517,11 @@ impl<T> World<T> {
     }
 }
 
-impl<T: Debug + Clone> World<T> {
+impl<T, U> World<T, U>
+where
+    T: Debug + Clone,
+    U: Eq + Hash
+{
     pub fn update(&mut self, ui_events: &mut Vec<T>) {
         if !self.initialized {
             //
