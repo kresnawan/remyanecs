@@ -33,6 +33,10 @@ where
     pub fn get(&self, font: &U) -> Option<&Font> {
         self.fonts.get(font)
     }
+
+    pub fn register(&mut self, identifier: U, font: Font) {
+        self.fonts.insert(identifier, font);
+    }
 }
 
 pub type UIElementId = usize;
