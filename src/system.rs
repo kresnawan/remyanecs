@@ -308,7 +308,12 @@ pub fn system_dynamic_transform<T, U>(world: &mut World<T, U>) {
                             ..pending_updates
                         };
                     }
-                    _ => {}
+                    DynDim::Custom(closure) => {
+                        pending_updates = PendingLayoutUpdate {
+                            new_width: Some(closure(parent_dim.w, parent_dim.h)),
+                            ..pending_updates
+                        };
+                    }
                 }
             }
 
@@ -326,7 +331,12 @@ pub fn system_dynamic_transform<T, U>(world: &mut World<T, U>) {
                             ..pending_updates
                         };
                     }
-                    _ => {}
+                    DynDim::Custom(closure) => {
+                        pending_updates = PendingLayoutUpdate {
+                            new_height: Some(closure(parent_dim.w, parent_dim.h)),
+                            ..pending_updates
+                        };
+                    }
                 }
             }
 
@@ -350,8 +360,12 @@ pub fn system_dynamic_transform<T, U>(world: &mut World<T, U>) {
                             ..pending_updates
                         };
                     }
-
-                    _ => {}
+                    DynPos::Custom(closure) => {
+                        pending_updates = PendingLayoutUpdate {
+                            new_x: Some(closure(parent_dim.w, parent_dim.h)),
+                            ..pending_updates
+                        };
+                    }
                 }
             }
 
@@ -375,8 +389,12 @@ pub fn system_dynamic_transform<T, U>(world: &mut World<T, U>) {
                             ..pending_updates
                         };
                     }
-
-                    _ => {}
+                    DynPos::Custom(closure) => {
+                        pending_updates = PendingLayoutUpdate {
+                            new_y: Some(closure(parent_dim.w, parent_dim.h)),
+                            ..pending_updates
+                        };
+                    }
                 }
             }
 

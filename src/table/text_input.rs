@@ -17,7 +17,7 @@ pub struct TextInputConfig<U> {
 }
 
 #[derive(Debug)]
-pub struct UITextInputTable<U> {
+pub struct UITextInputTable<U, T> {
     pub ids: Vec<UIElementId>,
     pub position: Vec<Position>,
     pub z_index: Vec<ZIndex>,
@@ -32,10 +32,11 @@ pub struct UITextInputTable<U> {
     pub value: Vec<String>,
 
     pub is_dirty: Vec<bool>,
+    pub on_input_event: Vec<Option<T>>
 }
 
-impl<U> UITextInputTable<U> {
-    pub fn new() -> UITextInputTable<U> {
+impl<U, T> UITextInputTable<U, T> {
+    pub fn new() -> UITextInputTable<U, T> {
         UITextInputTable {
             ids: Vec::new(),
             position: Vec::new(),
@@ -49,6 +50,7 @@ impl<U> UITextInputTable<U> {
             config: Vec::new(),
             value: Vec::new(),
             is_dirty: Vec::new(),
+            on_input_event: Vec::new()
         }
     }
 }

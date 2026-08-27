@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use std::fmt::Debug;
 
 use crate::{Gradient, UIElementId};
 
@@ -9,19 +10,38 @@ pub struct ButtonConfig<U> {
     pub hover_style: Option<Style<U>>,
 }
 
-#[derive(Clone, Debug)]
 pub enum DynPos {
     Start,
     Center,
     End,
-    Custom,
+    Custom(Box<dyn Fn(f32, f32) -> f32>),
 }
 
-#[derive(Debug)]
+impl Debug for DynPos {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DynPos::Start => write!(f, "Start"),
+            DynPos::Center => write!(f, "Center"),
+            DynPos::End => write!(f, "End"),
+            DynPos::Custom(_) => write!(f, "Custom(<closure>)"),
+        }
+    }
+}
+
 pub enum DynDim {
     Full,
     Percent(f32),
-    Custom,
+    Custom(Box<dyn Fn(f32, f32) -> f32>),
+}
+
+impl Debug for DynDim {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DynDim::Full => write!(f, "Full"),
+            DynDim::Percent(val) => f.debug_tuple("Percent").field(val).finish(),
+            DynDim::Custom(_) => write!(f, "Custom(<closure>)"),
+        }
+    }
 }
 
 #[derive(Debug)]

@@ -434,6 +434,7 @@ where
         config: TextInputConfig<U>,
         max_length: Option<usize>,
         parent: Option<UIElementId>,
+        on_input_event: Option<T>
     ) -> UIElementId {
         let current_id = self.next_id.clone();
         let current_z = self.next_z_index.clone();
@@ -461,6 +462,7 @@ where
             table.config.push(config);
             table.value.push(String::new());
             table.is_dirty.push(true);
+            table.on_input_event.push(on_input_event);
         }
 
         if let Some(parent) = parent {

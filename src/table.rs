@@ -27,7 +27,7 @@ pub enum UIElementTable<T, U> {
     UISlotTable(UISlotTable),
     UITextTable(UITextTable<U>),
     UIRectangleTable(UIRectangleTable<U>),
-    UITextInputTable(UITextInputTable<U>),
+    UITextInputTable(UITextInputTable<U, T>),
 }
 
 impl<T, U> UIElementTable<T, U> {
